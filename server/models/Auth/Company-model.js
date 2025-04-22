@@ -48,7 +48,7 @@ const companySchema = new Schema({
         required: true,
         unique: true
     },
-    logo: {
+    profilePicture: {
         type: String,
         trim: true
     },
@@ -128,24 +128,4 @@ const companySchema = new Schema({
 const CompanyProfile = model("CompanyProfile", companySchema);
 
 module.exports = CompanyProfile;
-
-
-
-// const { Schema, model } = require("mongoose");
-
-// const companySchema = new Schema({
-//     userId: {
-//         type: Schema.Types.ObjectId,
-//         ref: "Auth",
-//         required: true
-//     },
-//     name: { type: String, required: true },
-//     bio: { type: String, default: '' },
-//     profilePicture: { type: String, default: '' },
-//     createdAt: { type: Date, default: Date.now }
-// });
-
-// const CompanyProfile = model("CompanyProfile", companySchema);
-
-// module.exports = CompanyProfile;
 

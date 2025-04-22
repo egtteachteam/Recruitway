@@ -7,10 +7,7 @@ const { roleCheck } = require('../middleware/roleCheck');
 const authMiddleware = require('../middleware/auth-middleware');
 
 
-router.post('/createprofile', authMiddleware, roleCheck(['user']), upload.fields([
-    { name: 'profilePicture', maxCount: 1 },
-    { name: 'resume', maxCount: 1 }
-]), intervieweeController.createProfile);
+router.post('/createprofile', authMiddleware, roleCheck(['user']), upload.fields([{ name: 'profilePicture', maxCount: 1 }, { name: 'resume', maxCount: 1 }]), intervieweeController.createProfile);
 router.get('/dashboard', isAuthenticated, roleCheck(['interviewee']), intervieweeController.getDashboard);
 router.get('/dashboard', isAuthenticated, roleCheck(['interviewee']), intervieweeController.getDashboard);
 router.get('/dashboard', isAuthenticated, roleCheck(['interviewee']), intervieweeController.getDashboard);

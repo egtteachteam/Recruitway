@@ -1,47 +1,7 @@
 const CompanyProfile = require('../models/Auth/Company-model');
 const Interview = require('../models/Interview');
 const User = require('../models/User');
-
-// const createProfile = async (req, res) => {
-//     try {
-//         const userId = req.user._id;
-//         const updateData = req.body;
-
-//         console.log(updateData);
-
-
-//         let profile = await CompanyProfile.findOne({ userId });
-
-//         if (!profile) {
-//             profile = new CompanyProfile({ userId, ...updateData });
-//             await profile.save();
-//             console.log(profile);
-
-//             return res.status(201).json({ message: "Profile created successfully", profile });
-//         }
-
-//         Object.entries(updateData).forEach(([key, value]) => {
-//             if (Array.isArray(value)) {
-//                 profile[key] = value;
-//             } else if (typeof value === 'object' && value !== null) {
-//                 profile[key] = {
-//                     ...profile[key],
-//                     ...value
-//                 };
-//             } else {
-//                 profile[key] = value;
-//             }
-//         });
-
-//         await profile.save();
-//         return res.status(200).json({ message: "Profile updated successfully", profile });
-
-//     } catch (error) {
-//         console.error("Error updating company profile:", error);
-//         return res.status(500).json({ message: error.message });
-//     }
-// };
-
+const cloudinary = require("../config/cloudinary");
 
 const getProfile = async (req, res) => {
     try {
@@ -58,135 +18,113 @@ const getProfile = async (req, res) => {
 
 const createProfile = async (req, res) => {
     try {
-        const updateData = req.body;
         const userId = req.user._id;
+        const files = req.files || {};
+        const body = req.body;
 
-        if (req.file) {
-            updateData.logo = req.file.path;
-        }
-
-        let profile = await CompanyProfile.findOne({ userId });
-
-        if (!profile) {
-            const parseIfString = (value) => {
-                try {
-                    return typeof value === 'string' ? JSON.parse(value) : value;
-                } catch (err) {
-                    return value;
-                }
-            };
-
-            // Pre-parse all possibly stringified fields (especially arrays or objects)
-            const ceoInput = parseIfString(updateData.ceo) || {};
-            const founderInput = parseIfString(updateData.founder) || {};
-            const socialMediaInput = parseIfString(updateData.socialMedia) || {};
-            const keyDetailsInput = parseIfString(updateData.keyDetails) || [];
-            const historyInput = parseIfString(updateData.history) || [];
-            const desInput = parseIfString(updateData.des) || [];
-            const departmentsInput = parseIfString(updateData.departments) || [];
-            const locationsInput = parseIfString(updateData.locations) || [];
-
-            const newProfile = new CompanyProfile({
-                userId,
-                logo: updateData.logo || "",
-                fullname: updateData.fullname || "",
-                tagline: updateData.tagline || "",
-                industry: updateData.industry || "",
-                companySize: updateData.companySize || "",
-                headquarters: updateData.headquarters || "",
-
-                keyDetails: keyDetailsInput,
-                history: historyInput,
-                des: desInput,
-                departments: departmentsInput,
-                locations: locationsInput,
-
-                ceo: {
-                    ceoName: ceoInput.ceoName || "",
-                    since: ceoInput.since || ""
-                },
-                founder: {
-                    founderName: founderInput.founderName || "",
-                    currentRole: founderInput.currentRole || ""
-                },
-
-                website: updateData.website || "",
-                contactEmail: updateData.contactEmail || "",
-                contactPhone: updateData.contactPhone || "",
-                about: updateData.about || "",
-
-                socialMedia: {
-                    linkedin: socialMediaInput.linkedin || "",
-                    twitter: socialMediaInput.twitter || "",
-                    facebook: socialMediaInput.facebook || ""
-                }
-            });
-            await newProfile.save();
-        }
-
-        const parseIfString = (value) => {
+        // Helper function to safely parse JSON strings
+        const parseIfString = (value, defaultValue = {}) => {
             try {
-                return typeof value === 'string' ? JSON.parse(value) : value;
-            } catch {
-                return value;
+                if (typeof value === 'string') {
+                    return JSON.parse(value);
+                }
+                return value || defaultValue;
+            } catch (err) {
+                return defaultValue;
             }
         };
 
-        const ceoInput = parseIfString(updateData.ceo) || {};
-        const founderInput = parseIfString(updateData.founder) || {};
-        const socialMediaInput = parseIfString(updateData.socialMedia) || {};
+        // Process file uploads
+        let profilePictureUrl = '';
+        if (files.profilePicture) {
+            const profilePictureResult = await new Promise((resolve, reject) => {
+                const uploadStream = cloudinary.uploader.upload_stream(
+                    {
+                        folder: 'company_logos',
+                        transformation: [{ width: 500, height: 500, crop: 'limit' }]
+                    },
+                    (error, result) => {
+                        if (error) reject(error);
+                        else resolve(result);
+                    }
+                );
+                uploadStream.end(files.profilePicture[0].buffer);
+            });
+            profilePictureUrl = profilePictureResult.secure_url;
+        }
 
-        const keyDetailsInput = parseIfString(updateData.keyDetails) || profile.keyDetails;
-        const historyInput = parseIfString(updateData.history) || profile.history;
-        const desInput = parseIfString(updateData.des) || profile.des;
-        const departmentsInput = parseIfString(updateData.departments) || profile.departments;
-        const locationsInput = parseIfString(updateData.locations) || profile.locations;
-
-        const updateFields = {
-            logo: updateData.logo || profile.logo,
-            fullname: updateData.fullname || profile.fullname,
-            tagline: updateData.tagline || profile.tagline,
-            industry: updateData.industry || profile.industry,
-            companySize: updateData.companySize || profile.companySize,
-            headquarters: updateData.headquarters || profile.headquarters,
-            keyDetails: keyDetailsInput,
+        // Parse all input data
+        const parsedData = {
+            fullname: body.fullname || '',
+            tagline: body.tagline || '',
+            industry: body.industry || '',
+            companySize: body.companySize || '',
+            headquarters: body.headquarters || '',
+            website: body.website || '',
+            contactEmail: body.contactEmail || '',
+            contactPhone: body.contactPhone || '',
+            about: body.about || '',
+            keyDetails: parseIfString(body.keyDetails, []),
+            history: parseIfString(body.history, []),
+            des: parseIfString(body.des, []),
+            departments: parseIfString(body.departments, []),
+            locations: parseIfString(body.locations, []),
             ceo: {
-                ceoName: ceoInput.ceoName || profile.ceo.ceoName,
-                since: ceoInput.since || profile.ceo.since
+                ceoName: parseIfString(body.ceo, {}).ceoName || '',
+                since: parseIfString(body.ceo, {}).since || ''
             },
             founder: {
-                founderName: founderInput.founderName || profile.founder.founderName,
-                currentRole: founderInput.currentRole || profile.founder.currentRole
+                founderName: parseIfString(body.founder, {}).founderName || '',
+                currentRole: parseIfString(body.founder, {}).currentRole || ''
             },
-            website: updateData.website || profile.website,
-            contactEmail: updateData.contactEmail || profile.contactEmail,
-            contactPhone: updateData.contactPhone || profile.contactPhone,
-            about: updateData.about || profile.about,
-            history: historyInput,
-            des: desInput,
-            departments: departmentsInput,
-            locations: locationsInput,
             socialMedia: {
-                linkedin: socialMediaInput.linkedin || profile.socialMedia.linkedin,
-                twitter: socialMediaInput.twitter || profile.socialMedia.twitter,
-                facebook: socialMediaInput.facebook || profile.socialMedia.facebook
-            }
+                linkedin: parseIfString(body.socialMedia, {}).linkedin || '',
+                twitter: parseIfString(body.socialMedia, {}).twitter || '',
+                facebook: parseIfString(body.socialMedia, {}).facebook || ''
+            },
+            ...(profilePictureUrl && { profilePicture: profilePictureUrl })
         };
-        
+
+        // Find and update or create new profile
         const updatedProfile = await CompanyProfile.findOneAndUpdate(
             { userId },
-            { $set: updateFields },
-            { new: true }
+            { $set: parsedData },
+            {
+                new: true,
+                upsert: true,
+                setDefaultsOnInsert: true,
+                runValidators: true
+            }
         );
 
         return res.status(200).json({
-            message: "Profile updated successfully",
+            success: true,
+            message: "Profile saved successfully",
             profile: updatedProfile
         });
 
     } catch (error) {
-        console.error('Error updating profile:', error);
+        console.error('Error saving profile:', error);
+
+        // Handle specific error types
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({
+                success: false,
+                message: 'Validation failed',
+                error: error.message
+            });
+        }
+
+        if (error.message.includes('Cloudinary')) {
+            return res.status(500).json({
+                success: false,
+                message: 'File upload failed',
+                error: error.message
+            });
+        }
+
         res.status(500).json({
+            success: false,
             message: 'Server error',
             error: error.message
         });

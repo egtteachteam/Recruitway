@@ -1,17 +1,3 @@
-// const mongoose = require('mongoose');
-
-// const InterviewSchema = new mongoose.Schema({
-//     interviewee: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-//     interviewer: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-//     company: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-//     scheduledTime: Date,
-//     status: { type: String, enum: ['scheduled', 'completed', 'cancelled'], default: 'scheduled' }
-// });
-
-// module.exports = mongoose.model('Interview', InterviewSchema);
-
-
-
 const { Schema, model } = require('mongoose');
 
 const interviewSchema = new Schema({

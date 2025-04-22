@@ -13,7 +13,7 @@ const CompanyProfile = () => {
     const [activeSection, setActiveSection] = useState('overview');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [company, setCompany] = useState({
-        logo: "",
+        profilePicture: null,
         fullname: "",
         tagline: "",
         industry: "",
@@ -59,7 +59,7 @@ const CompanyProfile = () => {
 
             const data = response.data.data || {};
             setCompany({
-                logo: data.logo || "",
+                profilePicture: data.profilePicture || "",
                 fullname: data.fullname || "",
                 tagline: data.tagline || "",
                 industry: data.industry || "",
@@ -139,13 +139,13 @@ const CompanyProfile = () => {
         try {
             const formData = new FormData();
             Object.entries(company).forEach(([key, value]) => {
-                if (key !== 'logo' && value !== null && value !== undefined) {
+                if (key !== 'profilePicture' && value !== null && value !== undefined) {
                     formData.append(key, typeof value === 'object' ? JSON.stringify(value) : value);
                 }
             });
 
             if (selectedFile) {
-                formData.append('logo', selectedFile);
+                formData.append('profilePicture', selectedFile);
             }
 
             const response = await axios.post(`${server}/api/v1/company/createprofile`, formData, {
@@ -210,9 +210,6 @@ const CompanyProfile = () => {
         setMessage({ text: '', type: '' });
     };
 
-    console.log(company);
-    
-
     return (
         <>
             <div className="container-fluid">
@@ -233,7 +230,7 @@ const CompanyProfile = () => {
                                             <div className="d-flex flex-column align-items-center text-center mb-4">
                                                 <div className="position-relative mb-3">
                                                     <img
-                                                        src={preview || company?.logo || '/images/logos/user-pic.png'}
+                                                        src={preview || company?.profilePicture || '/images/profilePictures/user-pic.png'}
                                                         alt="Company Logo"
                                                         className="img-fluid rounded-circle border border-4 border-light"
                                                         style={{ width: '150px', height: '150px', objectFit: 'cover' }}
@@ -241,7 +238,7 @@ const CompanyProfile = () => {
                                                     {
                                                         editMode && (
                                                             <label
-                                                                htmlFor="logo"
+                                                                htmlFor="profilePicture"
                                                                 className="position-absolute bottom-0 end-0 bg-primary text-white p-2 rounded-circle cursor-pointer hover-bg-primary"
                                                                 style={{ transform: 'translate(25%, 25%)' }}
                                                             >
@@ -257,7 +254,7 @@ const CompanyProfile = () => {
                                                                     <path d="M8 11a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm0 1a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM3 6.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z" />
                                                                 </svg>
                                                                 <input
-                                                                    id="logo"
+                                                                    id="profilePicture"
                                                                     type="file"
                                                                     accept="image/*"
                                                                     onChange={handleFileChange}
@@ -269,7 +266,7 @@ const CompanyProfile = () => {
                                                 </div>
                                                 {
                                                     editMode && (
-                                                        <p className="text-muted small">Click on the camera icon to change your company logo</p>
+                                                        <p className="text-muted small">Click on the camera icon to change your company profilePicture</p>
                                                     )
                                                 }
                                             </div>

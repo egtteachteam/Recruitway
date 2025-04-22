@@ -41,7 +41,6 @@ import UserJobsApplied from './pages/User/UserJobsApplied/UserJobsApplied';
 import UserShortlisted from './pages/User/UserShortlisted/UserShortlisted';
 import UserProfile from './pages/User/UserProfile/UserProfile';
 import Profile from './pages/Profile';
-import Form from './pages/User/UserProfile/Form';
 
 function App() {
 
@@ -175,7 +174,6 @@ function App() {
           <Route path='jobs' element={<UserJobs />} />
           <Route path='jobs-applied' element={<UserJobsApplied />} />
           <Route path='shortlisted' element={<UserShortlisted />} />
-          {/* <Route path='profile' element={<Form />} /> */}
           <Route path='profile' element={<UserProfile />} />
           <Route path='a' element={<AppContact />} />
         </Route>
