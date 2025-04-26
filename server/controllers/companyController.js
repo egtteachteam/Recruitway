@@ -2,6 +2,8 @@ const CompanyProfile = require('../models/Auth/Company-model');
 const Interview = require('../models/Interview');
 const User = require('../models/User');
 const cloudinary = require("../config/cloudinary");
+const Job = require('../models/Job');
+const { all } = require('../routes/authRoutes');
 
 const getProfile = async (req, res) => {
     try {
@@ -131,6 +133,80 @@ const createProfile = async (req, res) => {
     }
 };
 
+const createJobPost = async (req, res) => {
+    const jobData = req.body;
+    const userId = req?.user?._id;
+
+    try {
+        let jobDoc = await Job.findOne({ userId });
+
+        if (jobDoc) {
+            jobDoc.jobs.push(jobData);
+            await jobDoc.save();
+        } else {
+            const newJobDoc = new Job({
+                userId,
+                jobs: [jobData]
+            });
+            await newJobDoc.save();
+        }
+
+        return res.status(200).json({ message: "Job post added successfully", jobDoc });
+
+    } catch (error) {
+        console.error("Error creating job post:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+const getAllJob = async (req, res) => {
+    const userId = req?.user?._id;
+
+    try {
+        const jobData = await Job.findOne({ userId }).select('jobs');  // Retrieve only the jobs field
+
+        if (!jobData || !jobData.jobs || jobData.jobs.length === 0) {
+            return res.status(404).json({ message: "No jobs found for this Company." });
+        }
+
+        const sortedJobs = jobData.jobs.sort((a, b) => b.posted - a.posted);
+
+        res.status(200).json({ jobs: sortedJobs });
+
+    } catch (error) {
+        // console.error(error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+const updateJobPost = async (req, res) => {
+    const jobId = req.params.jobId;
+    const updatedJobData = req.body;
+    const userId = req?.user?._id;
+
+    try {
+        const jobDoc = await Job.findOne({ userId });
+
+        if (!jobDoc) {
+            return res.status(404).json({ message: "Job document not found for this user." });
+        }
+
+        const jobIndex = jobDoc.jobs.findIndex(job => job._id.toString() === jobId);
+        if (jobIndex === -1) {
+            return res.status(404).json({ message: "Job not found." });
+        }
+
+        jobDoc.jobs[jobIndex] = { ...jobDoc.jobs[jobIndex]._doc, ...updatedJobData };
+
+        await jobDoc.save();
+
+        return res.status(200).json(jobDoc.jobs[jobIndex]);
+    } catch (error) {
+        console.error("Error updating job:", error);
+        return res.status(500).json({ message: "Failed to update job post." });
+    }
+};
+
 const getDashboard = async (req, res) => {
     try {
         const interviews = await Interview.find({ company: req.user._id }).populate('interviewee interviewer');
@@ -139,6 +215,30 @@ const getDashboard = async (req, res) => {
         res.status(500).json({ message: 'Error retrieving company dashboard data' });
     }
 };
+
+const deleteJobPost = async (req, res) => {
+    const { jobId } = req.params; // Job ID from URL params
+    const userId = req?.user?._id; // User ID from authentication
+
+    try {
+        // Find the job post by jobId and userId
+        const job = await Job.findOneAndUpdate(
+            { "jobs._id": jobId, userId }, // Match the jobId and userId
+            { $pull: { jobs: { _id: jobId } } }, // Remove the job from the jobs array
+            { new: true } // Return the updated document
+        );
+
+        if (!job) {
+            return res.status(404).json({ message: "Job not found or unauthorized access." });
+        }
+
+        res.status(200).json({ message: "Job deleted successfully." });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
 
 const scheduleInterview = async (req, res) => {
     try {
@@ -204,4 +304,4 @@ const getSuperAdmin = async (req, res) => {
     }
 };
 
-module.exports = { createProfile, getProfile, getDashboard, scheduleInterview, getInterviewees, getInterviewers, cancelInterview, getSuperAdmin }
+module.exports = { createProfile, getProfile, createJobPost, getAllJob, updateJobPost, deleteJobPost, getDashboard, scheduleInterview, getInterviewees, getInterviewers, cancelInterview, getSuperAdmin }

@@ -67,11 +67,13 @@ const Register = () => {
                     <div className="position-relative z-index-5">
                         <div className="row">
                             <div className="col-xl-7 col-xxl-8">
-                                <a href="index.html" className="text-nowrap logo-img d-block px-4 py-9 w-100">
-                                    <img
-                                        src="#"
-                                        width="180" alt="" />
-                                </a>
+                                <Link
+                                    to="https://recruitway.ai/"
+                                    className="text-nowrap logo-img d-block px-4 py-9 w-100 position-absolute"
+                                    style={{ top: 0, left: 0 }}
+                                >
+                                    <img src="./images/logos/logo.webp" width="180" alt="" />
+                                </Link>
                                 <div className="d-none d-xl-flex align-items-center justify-content-center" style={{ height: "calc(100vh - 80px)" }}>
                                     <img
                                         src="https://demos.adminmart.com/premium/bootstrap/modernize-bootstrap/package/dist/images/backgrounds/login-security.svg"

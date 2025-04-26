@@ -22,6 +22,12 @@ const authSchema = new Schema({
     isVerified: {
         type: Boolean,
         default: false
+    },
+    resetToken: {
+        type: String
+    },
+    tokenExpiry: {
+        type: Date
     }
 }, { timestamps: true });
 

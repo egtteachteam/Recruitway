@@ -11,7 +11,7 @@ const connectDB = require('./config/database');
 // Import Routes
 const authRoutes = require('./routes/authRoutes');
 const companyRouter = require('./routes/companyRoutes');
-const intervieweeRoutes = require('./routes/intervieweeRoutes');
+const intervieweeRouter = require('./routes/intervieweeRoutes');
 const interviewerRoutes = require('./routes/interviewerRoutes');
 const superadminRoutes = require('./routes/superadminRoutes');
 const interviewRoutes = require('./routes/interviewRoutes');
@@ -38,7 +38,7 @@ app.use(express.json());
 // API Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/company', companyRouter);
-app.use('/api/v1/candidate', intervieweeRoutes);
+app.use('/api/v1/candidate', intervieweeRouter);
 app.use('/api/v1/interviewer', interviewerRoutes);
 app.use('/api/v1/superadmin', superadminRoutes);
 app.use('/api/v1/interviews', interviewRoutes);

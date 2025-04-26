@@ -1,21 +1,26 @@
 const express = require('express');
-const router = express.Router();
+const intervieweeRouter = express.Router();
 const upload = require("../config/multer");
-const intervieweeController = require('../controllers/intervieweeController');
+const { createProfile, getProfile, checkPassword } = require('../controllers/intervieweeController');
 const { isAuthenticated } = require('../middleware/auth');
 const { roleCheck } = require('../middleware/roleCheck');
 const authMiddleware = require('../middleware/auth-middleware');
 
 
-router.post('/createprofile', authMiddleware, roleCheck(['user']), upload.fields([{ name: 'profilePicture', maxCount: 1 }, { name: 'resume', maxCount: 1 }]), intervieweeController.createProfile);
-router.get('/dashboard', isAuthenticated, roleCheck(['interviewee']), intervieweeController.getDashboard);
-router.get('/dashboard', isAuthenticated, roleCheck(['interviewee']), intervieweeController.getDashboard);
-router.get('/dashboard', isAuthenticated, roleCheck(['interviewee']), intervieweeController.getDashboard);
-router.get('/dashboard', isAuthenticated, roleCheck(['interviewee']), intervieweeController.getDashboard);
+intervieweeRouter.post('/createprofile', authMiddleware, roleCheck(['user']), upload.fields([{ name: 'profilePicture', maxCount: 1 }, { name: 'resume', maxCount: 1 }]), createProfile);
+intervieweeRouter.get('/getprofile', authMiddleware, roleCheck(['user']), getProfile);
 
 
-router.get('/interviews', isAuthenticated, roleCheck(['interviewee']), intervieweeController.viewInterviews);
-router.post('/accept/:id', isAuthenticated, roleCheck(['interviewee']), intervieweeController.acceptInterview);
-router.post('/reject/:id', isAuthenticated, roleCheck(['interviewee']), intervieweeController.rejectInterview);
 
-module.exports = router;
+
+// intervieweeRouter.get('/dashboard', isAuthenticated, roleCheck(['interviewee']), getDashboard);
+// intervieweeRouter.get('/dashboard', isAuthenticated, roleCheck(['interviewee']), getDashboard);
+// intervieweeRouter.get('/dashboard', isAuthenticated, roleCheck(['interviewee']), getDashboard);
+// intervieweeRouter.get('/dashboard', isAuthenticated, roleCheck(['interviewee']), getDashboard);
+
+
+// intervieweeRouter.get('/interviews', isAuthenticated, roleCheck(['interviewee']), viewInterviews);
+// intervieweeRouter.post('/accept/:id', isAuthenticated, roleCheck(['interviewee']), acceptInterview);
+// intervieweeRouter.post('/reject/:id', isAuthenticated, roleCheck(['interviewee']), rejectInterview);
+
+module.exports = intervieweeRouter;

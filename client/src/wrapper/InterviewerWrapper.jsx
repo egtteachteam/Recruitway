@@ -11,6 +11,10 @@ const InterviewerWrapper = ({ children }) => {
     useEffect(() => {
         const token = localStorage.getItem("token");
 
+        if (!token) {
+            setShowAccessModal(true);
+        }
+
         if (user && (!token || user.role !== "interviewer")) {
             setShowAccessModal(true);
         }
@@ -18,6 +22,15 @@ const InterviewerWrapper = ({ children }) => {
         const timer = setTimeout(() => setLoading(false), 300);
         return () => clearTimeout(timer);
     }, [user]);
+
+    const handleLogin = () => {
+        if (user) {
+            logout();
+            navigate("/login");
+        } else {
+            navigate("/login");
+        }
+    }
 
     if (loading) {
         return (
@@ -47,13 +60,7 @@ const InterviewerWrapper = ({ children }) => {
                             <button className="btn btn-outline-primary" onClick={() => window.location.reload()}>
                                 Retry
                             </button>
-                            <button
-                                className="btn btn-primary"
-                                onClick={() => {
-                                    logout();
-                                    navigate("/login");
-                                }}
-                            >
+                            <button className="btn btn-primary" onClick={handleLogin}>
                                 Login as Interviewer
                             </button>
                         </div>

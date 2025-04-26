@@ -39,6 +39,12 @@ const UserSidebar = () => {
                                 <span className="hide-menu">Shortlisted</span>
                             </Link>
                         </li>
+                        <li className="sidebar-item">
+                            <Link className="sidebar-link" to="/user/setting" aria-expanded="false">
+                                <span><i className="ti ti-settings"></i></span>
+                                <span className="hide-menu">Settings</span>
+                            </Link>
+                        </li>
                     </ul>
                 </nav>
             </div>

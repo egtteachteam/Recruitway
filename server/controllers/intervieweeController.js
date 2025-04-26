@@ -2,6 +2,19 @@ const CandidateProfile = require('../models/Auth/Candidate-model');
 const Interview = require('../models/Interview');
 const cloudinary = require("../config/cloudinary");
 
+const getProfile = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        let profile = await CandidateProfile.findOne({ userId });
+        return res.status(200).json({ data: profile })
+
+    } catch (error) {
+        console.error("Error getiing company profile:", error);
+        return res.status(500).json({ message: error.message });
+    }
+}
+
 const createProfile = async (req, res) => {
     try {
         const userId = req.user._id;
@@ -15,6 +28,8 @@ const createProfile = async (req, res) => {
             location: body.location,
             phone: body.phone,
             summary: body.summary,
+            gender: body.gender,
+            dob: body.dob,
             socialMedia: JSON.parse(body.socialMedia || '{}'),
             experience: JSON.parse(body.experience || '[]'),
             education: JSON.parse(body.education || '[]'),
@@ -147,4 +162,4 @@ const rejectInterview = async (req, res) => {
     }
 };
 
-module.exports = { createProfile, getDashboard, viewInterviews, acceptInterview, rejectInterview }
+module.exports = { getProfile, createProfile, getDashboard, viewInterviews, acceptInterview, rejectInterview }

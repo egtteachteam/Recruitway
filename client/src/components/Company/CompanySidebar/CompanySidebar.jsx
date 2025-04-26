@@ -27,12 +27,6 @@ const CompanySidebar = () => {
                                 <span className="hide-menu">Candidates</span>
                             </Link>
                         </li>
-                        {/* <li className="sidebar-item">
-                            <Link className="sidebar-link" to="/company/interviewers" aria-expanded="false">
-                                <span><i className="ti ti-user-check"></i></span>
-                                <span className="hide-menu">Interviewers</span>
-                            </Link>
-                        </li> */}
                         <li className="sidebar-item">
                             <Link className="sidebar-link" to="/company/report" aria-expanded="false">
                                 <span><i className="ti ti-user"></i></span>
@@ -49,6 +43,18 @@ const CompanySidebar = () => {
                             <Link className="sidebar-link" to="/company/chat-with-superadmin" aria-expanded="false">
                                 <span><i className="ti ti-messages"></i></span>
                                 <span className="hide-menu">Chat With Super Admin</span>
+                            </Link>
+                        </li>
+                        <li className="sidebar-item">
+                            <Link className="sidebar-link" to="/company/setting" aria-expanded="false">
+                                <span><i className="ti ti-settings"></i></span>
+                                <span className="hide-menu">Settings</span>
+                            </Link>
+                        </li>
+                        <li className="sidebar-item">
+                            <Link className="sidebar-link" to="/company/CompanyDetail" aria-expanded="false">
+                                <span><i className="ti ti-messages"></i></span>
+                                <span className="hide-menu">Company Details</span>
                             </Link>
                         </li>
                     </ul>

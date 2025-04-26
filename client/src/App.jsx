@@ -41,6 +41,30 @@ import UserJobsApplied from './pages/User/UserJobsApplied/UserJobsApplied';
 import UserShortlisted from './pages/User/UserShortlisted/UserShortlisted';
 import UserProfile from './pages/User/UserProfile/UserProfile';
 import Profile from './pages/Profile';
+import SettingsPage from './pages/SettingsPage';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import CandidateForm from './pages/Interviewer/InterviewOverview/CandidateFrom';
+import CompanyDetail from './pages/Company/CompanyNew/CompanyDetail';
+import CompanyRegister from './pages/Company/CompanyNew/CompanyRegister';
+import InterviewOverview from './pages/Interviewer/InterviewOverview/interviewOverview';
+import CandidateDetails from './pages/Interviewer/InterviewOverview/candidateDetail';
+import InterviewFormat from './pages/Interviewer/InterviewOverview/InterviewFormat';
+import RealTimeNotes from './pages/Interviewer/InterviewOverview/realtimenotes';
+import ScoringSystem from './pages/Interviewer/InterviewOverview/scoringsystem';
+import InterviewHistory from './pages/Interviewer/InterviewOverview/interviewhistory';
+import PostInterviewActions from './pages/Interviewer/InterviewOverview/postinterviewaction';
+import IntegrationTools from './pages/Interviewer/InterviewOverview/integrationtools';
+import CandidateManagement from './pages/SuperAdmin/superadminoverview/CandidateProfileManagement/CandidateManagement';
+import CompanyManagement from './pages/SuperAdmin/superadminoverview/companymanagment/CompanyManagement';
+import InterviewManagement from './pages/SuperAdmin/superadminoverview/InterviewManagement/InterviewManagement';
+import JobPostingManagement from './pages/SuperAdmin/superadminoverview/JobPostingManagement/JobPostingManagement';
+import UserManagement from './pages/SuperAdmin/superadminoverview/UserManagement';
+import DashboardAnalytics from './pages/SuperAdmin/superadminoverview/DashboardAnalytics/dashboardanalytics';
+import FeedbackModeration from './pages/SuperAdmin/superadminoverview/FeedbackModeration/feedbackmoderation';
+import SystemSettings from './pages/SuperAdmin/superadminoverview/SystemSettings/systemsettings';
+import SuperAdminProfile from './pages/SuperAdmin/SuperAdminProfile/SuperAdminProfile';
+import SuperAdminAllUser from './pages/SuperAdmin/SuperAdminAllUser/SuperAdminAllUser';
 
 function App() {
 
@@ -104,6 +128,8 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path='/login' element={<Login />} />
         <Route path='/register' element={<Register />} />
+        <Route path='/forgot-password' element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
         <Route path='/waitingReply' element={<WaitingReply />} />
         <Route path='/profile' element={<Profile />} />
 
@@ -130,8 +156,31 @@ function App() {
           <Route path='job-posts' element={<CompanyJobPosts />} />
           <Route path='create-job-post' element={<CompanyCreateJobPost />} />
           <Route path='chat-with-superadmin' element={<CompanyChatWithSuperAdmin />} />
+          <Route path='setting' element={<SettingsPage />} />
           <Route path='profile' element={<CompanyProfile />} />
           <Route path='a' element={<AppContact />} />
+
+          <Route path='candidatefrom' element={<CandidateForm />} />
+          <Route path='CompanyDetail' element={<CompanyDetail />} />
+          <Route path='CompanyRegister' element={<CompanyRegister />} />
+          <Route path='InterviewOverview' element={<InterviewOverview />} />
+          <Route path='CandidateDetails'  element={<CandidateDetails/>} />
+          <Route path='InterviewFormate'  element={<InterviewFormat/>} />
+          <Route path='RealTimeNotes' element={<RealTimeNotes/>}/>
+          <Route path='ScoringSystem' element={<ScoringSystem/>}/>
+          <Route path='InterviewHistory' element={<InterviewHistory/>}/>
+          <Route path='PostInterviewAction' element={<PostInterviewActions/>}/>
+          <Route path='IntegrationTools'  element={<IntegrationTools/>}/>
+          <Route path='CandidateManagement' element={<CandidateManagement/>}/>
+          <Route path='CompanyManagement' element={<CompanyManagement/>}/>
+          <Route path='InterviewManagement' element={<InterviewManagement/>}/>
+          <Route path='JobPostingManagement' element={<JobPostingManagement/>}/>
+          <Route path='UserManagement' element={< UserManagement/>}/>
+          <Route path='DashboardAnalytics' element={<DashboardAnalytics/>}/>
+          <Route path='FeedbackModeration' element={<FeedbackModeration/>}/>
+          <Route path='SystemSettings' element={<SystemSettings/>}/>
+
+
         </Route>
 
         {/* Super Admin Routes */}
@@ -141,7 +190,20 @@ function App() {
           </SuperAdminWrapper>
         }>
           <Route path='dashboard' element={<SuperAdminDashBoard />} />
+          <Route path='profile' element={<SuperAdminProfile />} />
           <Route path='a' element={<AppContact />} />
+
+          <Route path='CandidateManagement' element={<CandidateManagement />} />
+          <Route path='CompanyManagement' element={<CompanyManagement/>}/>
+          <Route path='InterviewManagement' element={<InterviewManagement/>}/>
+          <Route path='JobPostingManagement' element={<JobPostingManagement/>}/>
+          <Route path='DashboardAnalytics' element={<DashboardAnalytics/>}/>
+          <Route path='FeedbackModeration' element={<FeedbackModeration/>}/>
+          <Route path='SystemSettings' element={<SystemSettings/>}/>
+          <Route path='UserManagement' element={<UserManagement/>}/>
+          <Route path='alluser' element={<SuperAdminAllUser/>}/>
+
+
         </Route>
 
         {/* Interviewer Routes */}
@@ -152,6 +214,17 @@ function App() {
         }>
           <Route path='dashboard' element={<InterviewerDashBoard />} />
           <Route path='a' element={<AppContact />} />
+
+          <Route path='InterviewOverview' element={<InterviewOverview />} />
+          <Route path='CandidateDetails' element={<CandidateDetails/>}/>
+          <Route path='InterviewFormate' element={<InterviewFormat/>}/>
+          <Route path='RealTimeNotes' element={<RealTimeNotes/>}/>
+          <Route path='ScoringSystem' element={<ScoringSystem/>}/>
+          <Route path='InterviewHistory' element={<InterviewHistory/>}/>
+          <Route path='PostInterviewActions' element={<PostInterviewActions/>}/>
+          <Route path='IntegrationTools' element={<IntegrationTools/>}/>
+
+
         </Route>
 
         {/* Interviewee Routes */}
@@ -174,6 +247,7 @@ function App() {
           <Route path='jobs' element={<UserJobs />} />
           <Route path='jobs-applied' element={<UserJobsApplied />} />
           <Route path='shortlisted' element={<UserShortlisted />} />
+          <Route path='setting' element={<SettingsPage />} />
           <Route path='profile' element={<UserProfile />} />
           <Route path='a' element={<AppContact />} />
         </Route>

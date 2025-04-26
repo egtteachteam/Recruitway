@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAuthContext } from '../../../context/auth-context';
+import PasswordCheck from '../../../components/PasswordCheck';
 
 const CompanyProfile = () => {
 
@@ -210,6 +211,57 @@ const CompanyProfile = () => {
         setMessage({ text: '', type: '' });
     };
 
+    const wordLimit = 1000;
+    const [wordCount, setWordCount] = useState(company?.about?.length);
+    const [summaryError, setSummaryError] = useState('');
+
+    const handleSummaryChange = (e) => {
+        const { value } = e.target;
+        const words = value
+        const count = words.length;
+
+        if (count <= wordLimit) {
+            setCompany(prev => ({ ...prev, about: value }));
+            setWordCount(count);
+            setSummaryError('');
+        } else {
+            setSummaryError(`Maximum ${wordLimit} words allowed.`);
+        }
+    };
+
+    const [showPasswordModal, setShowPasswordModal] = useState(false)
+    const handleEditClick = () => {
+        setShowPasswordModal(true);
+    };
+
+    const handlePasswordVerify = async (password) => {
+        try {
+            if (!password) {
+                return toast.error("Please enter your password.");
+            }
+
+            const response = await axios.post(`${server}/api/v1/auth/checkPassword`,
+                { password },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                }
+            );
+
+            if (response.data.success) {
+                toast.success("Password verified successfully!");
+                setMessage({ text: "", type: "" });
+                setEditMode(true);
+            } else {
+                toast.error(response.data.message || "Password verification failed.");
+            }
+        } catch (error) {
+            console.error("Password verification error:", error);
+            toast.error(error.response?.data?.message || "Something went wrong during password verification.");
+        }
+    };
+
     return (
         <>
             <div className="container-fluid">
@@ -226,8 +278,8 @@ const CompanyProfile = () => {
                             <div className="col-12">
                                 <div className="card shadow-sm">
                                     <div className="card-body">
-                                        <div className="d-flex flex-column align-items-start gap-4">
-                                            <div className="d-flex flex-column align-items-center text-center mb-4">
+                                        <div className="d-flex flex-column flex-md-row align-items-start gap-4">
+                                            <div className="d-flex flex-column align-items-start text-center mb-4">
                                                 <div className="position-relative mb-3">
                                                     <img
                                                         src={preview || company?.profilePicture || '/images/profilePictures/user-pic.png'}
@@ -240,7 +292,6 @@ const CompanyProfile = () => {
                                                             <label
                                                                 htmlFor="profilePicture"
                                                                 className="position-absolute bottom-0 end-0 bg-primary text-white p-2 rounded-circle cursor-pointer hover-bg-primary"
-                                                                style={{ transform: 'translate(25%, 25%)' }}
                                                             >
                                                                 <svg
                                                                     xmlns="http://www.w3.org/2000/svg"
@@ -266,140 +317,144 @@ const CompanyProfile = () => {
                                                 </div>
                                                 {
                                                     editMode && (
-                                                        <p className="text-muted small">Click on the camera icon to change your company profilePicture</p>
+                                                        <p className="text-muted small">Click on the camera icon to change your company Logo</p>
                                                     )
                                                 }
                                             </div>
-                                            <div className="flex-grow-1 text-start">
-                                                {editMode ? (
-                                                    <>
-                                                        <input
-                                                            type="text"
-                                                            name="fullname"
-                                                            value={company?.fullname}
-                                                            onChange={handleInputChange}
-                                                            className="form-control form-control-lg mb-2"
-                                                            placeholder="Company Name"
-                                                            required
-                                                        />
-                                                        <input
-                                                            type="text"
-                                                            name="tagline"
-                                                            value={company?.tagline}
-                                                            onChange={handleInputChange}
-                                                            className="form-control mb-2"
-                                                            placeholder="Tagline"
-                                                            required
-                                                        />
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <h1 className="mb-2">{company?.fullname || "Company Name"}</h1>
-                                                        <h2 className="h4 text-muted mb-3">{company?.tagline || "Company Tagline"}</h2>
-                                                    </>
-                                                )}
-                                                <div className="d-flex flex-wrap justify-content-start gap-3">
+                                            <div className="d-flex flex-column flex-lg-row align-items-start gap-4">
+                                                <div className="flex-grow-1 text-start">
                                                     {editMode ? (
                                                         <>
-                                                            <div className="d-flex align-items-center gap-2">
-                                                                <i className="ti ti-building-community me-2"></i>
-                                                                <input
-                                                                    type="text"
-                                                                    name="industry"
-                                                                    value={company?.industry}
-                                                                    onChange={handleInputChange}
-                                                                    className="form-control form-control-sm"
-                                                                    placeholder="Industry"
-                                                                    style={{ width: '120px' }}
-                                                                />
-                                                            </div>
-                                                            <div className="d-flex align-items-center gap-2">
-                                                                <i className="ti ti-users me-2"></i>
-                                                                <input
-                                                                    type="text"
-                                                                    name="companySize"
-                                                                    value={company?.companySize}
-                                                                    onChange={handleInputChange}
-                                                                    className="form-control form-control-sm"
-                                                                    placeholder="Company Size"
-                                                                    style={{ width: '120px' }}
-                                                                />
-                                                            </div>
-                                                            <div className="d-flex align-items-center gap-2">
-                                                                <i className="ti ti-map-pin me-2"></i>
-                                                                <input
-                                                                    type="text"
-                                                                    name="headquarters"
-                                                                    value={company?.headquarters}
-                                                                    onChange={handleInputChange}
-                                                                    className="form-control form-control-sm"
-                                                                    placeholder="Headquarters"
-                                                                    style={{ width: '150px' }}
-                                                                    required
-                                                                />
-                                                            </div>
+                                                            <input
+                                                                type="text"
+                                                                name="fullname"
+                                                                value={company?.fullname}
+                                                                onChange={handleInputChange}
+                                                                className="form-control form-control-lg mb-2"
+                                                                placeholder="Company Name"
+                                                                required
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                name="tagline"
+                                                                value={company?.tagline}
+                                                                onChange={handleInputChange}
+                                                                className="form-control mb-2"
+                                                                placeholder="Tagline"
+                                                                required
+                                                            />
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <span className="d-flex align-items-center">
-                                                                <i className="ti ti-building-community me-2"></i>
-                                                                {company?.industry || "Industry"}
-                                                            </span>
-                                                            <span className="d-flex align-items-center">
-                                                                <i className="ti ti-users me-2"></i>
-                                                                {company?.companySize || "Company Size"}
-                                                            </span>
-                                                            <span className="d-flex align-items-center">
-                                                                <i className="ti ti-map-pin me-2"></i>
-                                                                {company?.headquarters || "Headquarters"}
-                                                            </span>
+                                                            <h1 className="mb-2">{company?.fullname || "Company Name"}</h1>
+                                                            <h2 className="h4 text-muted mb-3">{company?.tagline || "Company Tagline"}</h2>
                                                         </>
+                                                    )}
+                                                    <div className="d-flex flex-wrap justify-content-start gap-3">
+                                                        {editMode ? (
+                                                            <>
+                                                                <div className="d-flex align-items-center gap-2">
+                                                                    <i className="ti ti-building-community me-2"></i>
+                                                                    <input
+                                                                        type="text"
+                                                                        name="industry"
+                                                                        value={company?.industry}
+                                                                        onChange={handleInputChange}
+                                                                        className="form-control form-control-sm"
+                                                                        placeholder="Industry"
+                                                                        style={{ width: '120px' }}
+                                                                    />
+                                                                </div>
+                                                                <div className="d-flex align-items-center gap-2">
+                                                                    <i className="ti ti-users me-2"></i>
+                                                                    <input
+                                                                        type="text"
+                                                                        name="companySize"
+                                                                        value={company?.companySize}
+                                                                        onChange={handleInputChange}
+                                                                        className="form-control form-control-sm"
+                                                                        placeholder="Company Size"
+                                                                        style={{ width: '120px' }}
+                                                                    />
+                                                                </div>
+                                                                <div className="d-flex align-items-center gap-2">
+                                                                    <i className="ti ti-map-pin me-2"></i>
+                                                                    <input
+                                                                        type="text"
+                                                                        name="headquarters"
+                                                                        value={company?.headquarters}
+                                                                        onChange={handleInputChange}
+                                                                        className="form-control form-control-sm"
+                                                                        placeholder="Headquarters"
+                                                                        style={{ width: '150px' }}
+                                                                        required
+                                                                    />
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <span className="d-flex align-items-center">
+                                                                    <i className="ti ti-building-community me-2"></i>
+                                                                    {company?.industry || "Industry"}
+                                                                </span>
+                                                                <span className="d-flex align-items-center">
+                                                                    <i className="ti ti-users me-2"></i>
+                                                                    {company?.companySize || "Company Size"}
+                                                                </span>
+                                                                <span className="d-flex align-items-center">
+                                                                    <i className="ti ti-map-pin me-2"></i>
+                                                                    {company?.headquarters || "Headquarters"}
+                                                                </span>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                <div className="mt-3 mt-md-0 d-flex flex-column flex-sm-row gap-2">
+                                                    <button
+                                                        type={editMode ? "submit" : "button"}
+                                                        className={`btn btn-sm ${editMode ? 'btn-success' : 'btn-primary'}`}
+                                                        style={{
+                                                            backgroundColor: !editMode && '#5D87FF',
+                                                            borderColor: !editMode && '#5D87FF'
+                                                        }}
+                                                        // onClick={!editMode ? (e) => {
+                                                        //     e.preventDefault();
+                                                        //     setEditMode(true);
+                                                        //     setMessage({ text: "", type: "" });
+                                                        // } : undefined}
+                                                        onClick={!editMode ? handleEditClick : undefined}
+                                                        disabled={isSubmitting}
+                                                    >
+                                                        {isSubmitting ? (
+                                                            <>
+                                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                                Saving...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <i className="ti ti-user-edit me-2"></i>
+                                                                {editMode ? 'Save Profile' : 'Edit Profile'}
+                                                            </>
+                                                        )}
+                                                    </button>
+
+                                                    {editMode && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-sm btn-secondary"
+                                                            onClick={() => {
+                                                                setEditMode(false);
+                                                                setMessage({ type: '', text: '' });;
+                                                            }}
+                                                            disabled={isSubmitting}
+                                                        >
+                                                            Cancel
+                                                        </button>
                                                     )}
                                                 </div>
                                             </div>
 
-                                            <div className="mt-3 mt-md-0 d-flex flex-column flex-sm-row gap-2">
-                                                <button
-                                                    type={editMode ? "submit" : "button"}
-                                                    className={`btn ${editMode ? 'btn-success' : 'btn-primary'}`}
-                                                    style={{
-                                                        backgroundColor: !editMode && '#5D87FF',
-                                                        borderColor: !editMode && '#5D87FF'
-                                                    }}
-                                                    onClick={!editMode ? (e) => {
-                                                        e.preventDefault();
-                                                        setEditMode(true);
-                                                        setMessage({ text: "", type: "" });
-                                                    } : undefined}
-                                                    disabled={isSubmitting}
-                                                >
-                                                    {isSubmitting ? (
-                                                        <>
-                                                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                            Saving...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <i className="ti ti-user-edit me-2"></i>
-                                                            {editMode ? 'Save Profile' : 'Edit Profile'}
-                                                        </>
-                                                    )}
-                                                </button>
-
-                                                {editMode && (
-                                                    <button
-                                                        type="button"
-                                                        className="btn btn-secondary"
-                                                        onClick={() => {
-                                                            setEditMode(false);
-                                                            setMessage({ type: '', text: '' });;
-                                                        }}
-                                                        disabled={isSubmitting}
-                                                    >
-                                                        Cancel
-                                                    </button>
-                                                )}
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -620,41 +675,41 @@ const CompanyProfile = () => {
                                 {/* Navigation */}
                                 <div className="card shadow-sm mb-4">
                                     <div className="card-body p-2">
-                                        <ul className="nav nav-pills">
+                                        <ul className="nav nav-pills gap-2">
                                             <li className="nav-item">
                                                 <button
                                                     type="button"
-                                                    className={`nav-link ${activeSection === 'overview' ? 'active' : ''}`}
+                                                    className={`btn btn-sm ${activeSection === 'overview' ? 'btn-primary' : 'btn-outline-primary'} me-2`}
                                                     onClick={() => setActiveSection('overview')}
                                                 >
-                                                    <i className="ti ti-info-circle me-1"></i> Overview
+                                                    Overview
                                                 </button>
                                             </li>
                                             <li className="nav-item">
                                                 <button
                                                     type="button"
-                                                    className={`nav-link ${activeSection === 'departments' ? 'active' : ''}`}
+                                                    className={`btn btn-sm ${activeSection === 'departments' ? 'btn-primary' : 'btn-outline-primary'} me-2`}
                                                     onClick={() => setActiveSection('departments')}
                                                 >
-                                                    <i className="ti ti-building me-1"></i> Departments
+                                                    Departments
                                                 </button>
                                             </li>
                                             <li className="nav-item">
                                                 <button
                                                     type="button"
-                                                    className={`nav-link ${activeSection === 'locations' ? 'active' : ''}`}
+                                                    className={`btn btn-sm ${activeSection === 'locations' ? 'btn-primary' : 'btn-outline-primary'} me-2`}
                                                     onClick={() => setActiveSection('locations')}
                                                 >
-                                                    <i className="ti ti-map-pin me-1"></i> Locations
+                                                    Locations
                                                 </button>
                                             </li>
                                             <li className="nav-item">
                                                 <button
                                                     type="button"
-                                                    className={`nav-link ${activeSection === 'social' ? 'active' : ''}`}
+                                                    className={`btn btn-sm ${activeSection === 'social' ? 'btn-primary' : 'btn-outline-primary'} me-2`}
                                                     onClick={() => setActiveSection('social')}
                                                 >
-                                                    <i className="ti ti-brand-facebook me-1"></i> Social
+                                                    Social
                                                 </button>
                                             </li>
                                         </ul>
@@ -680,15 +735,29 @@ const CompanyProfile = () => {
                                                     )}
                                                 </div>
                                                 {editMode ? (
-                                                    <textarea
-                                                        name="about"
-                                                        value={company?.about}
-                                                        onChange={handleInputChange}
-                                                        rows="6"
-                                                        className="form-control mb-4"
-                                                        placeholder="About the company"
-                                                        required
-                                                    />
+                                                    // <textarea
+                                                    //     name="about"
+                                                    //     value={company?.about}
+                                                    //     onChange={handleInputChange}
+                                                    //     rows="6"
+                                                    //     className="form-control mb-4"
+                                                    //     placeholder="About the company"
+                                                    //     required
+                                                    // />
+                                                    <>
+                                                        <textarea
+                                                            name="about"
+                                                            value={company?.about}
+                                                            onChange={handleSummaryChange}
+                                                            rows="10"
+                                                            className={`overflow-y-auto form-control ${summaryError ? 'is-invalid' : ''}`}
+                                                            style={{ resize: "none" }}
+                                                            required
+                                                        />
+                                                        <div className="invalid-feedback">{summaryError}</div>
+                                                        <small className="text-muted">{wordCount}/{wordLimit} words</small>
+
+                                                    </>
                                                 ) : (
                                                     <p className="mb-4">{company?.about || "No description available"}</p>
                                                 )}
@@ -1062,6 +1131,12 @@ const CompanyProfile = () => {
                     </form >
                 </div >
             </div >
+
+            <PasswordCheck
+                show={showPasswordModal}
+                onClose={() => setShowPasswordModal(false)}
+                onVerify={handlePasswordVerify}
+            />
         </>
     );
 };

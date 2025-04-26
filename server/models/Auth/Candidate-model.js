@@ -150,6 +150,16 @@ const candidateProfileSchema = new Schema({
         required: true,
         trim: true
     },
+    gender: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    dob: {
+        type: String,
+        required: true,
+        trim: true
+    },
     summary: {
         type: String,
         required: true,

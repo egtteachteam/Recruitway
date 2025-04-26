@@ -107,7 +107,8 @@ const interviewerProfileSchema = new Schema({
     userId: {
         type: Schema.Types.ObjectId,
         ref: "Auth",
-        required: true
+        required: true,
+        unique: true
     },
     profilePicture: {
         type: String,

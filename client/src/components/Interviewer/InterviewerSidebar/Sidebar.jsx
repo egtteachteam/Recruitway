@@ -14,7 +14,7 @@ const InterviewerSidebar = () => {
                 </div>
 
                 <nav className="sidebar-nav mt-5" data-simplebar>
-                    <ul id="sidebarnav">
+                    {/* <ul id="sidebarnav">
                         <li className="sidebar-item">
                             <Link className="sidebar-link" to="/company/dashboard" aria-expanded="false">
                                 <span><i className="ti ti-layout-dashboard"></i></span>
@@ -27,12 +27,6 @@ const InterviewerSidebar = () => {
                                 <span className="hide-menu">Candidates</span>
                             </Link>
                         </li>
-                        {/* <li className="sidebar-item">
-                            <Link className="sidebar-link" to="/company/interviewers" aria-expanded="false">
-                                <span><i className="ti ti-user-check"></i></span>
-                                <span className="hide-menu">Interviewers</span>
-                            </Link>
-                        </li> */}
                         <li className="sidebar-item">
                             <Link className="sidebar-link" to="/company/report" aria-expanded="false">
                                 <span><i className="ti ti-user"></i></span>
@@ -49,6 +43,56 @@ const InterviewerSidebar = () => {
                             <Link className="sidebar-link" to="/company/chat-with-superadmin" aria-expanded="false">
                                 <span><i className="ti ti-messages"></i></span>
                                 <span className="hide-menu">Chat With Super Admin</span>
+                            </Link>
+                        </li>
+                    </ul> */}
+                    <ul id="sidebarnav">
+                        <li className="sidebar-item">
+                            <Link className="sidebar-link" to="/interviewer/InterviewOverview" aria-expanded="false">
+                                <span><i className="ti ti-layout-dashboard"></i></span>
+                                <span className="hide-menu">Interview Overview</span>
+                            </Link>
+                        </li>
+                        <li className="sidebar-item">
+                            <Link className="sidebar-link" to="/interviewer/CandidateDetails" aria-expanded="false">
+                                <span><i className="ti ti-users"></i></span>
+                                <span className="hide-menu">Candidate Details</span>
+                            </Link>
+                        </li>
+                        <li className="sidebar-item">
+                            <Link className="sidebar-link" to="/interviewer/InterviewFormate" aria-expanded="false">
+                                <span><i className="ti ti-user-check"></i></span>
+                                <span className="hide-menu">Interview Formate</span>
+                            </Link>
+                        </li>
+                        <li className="sidebar-item">
+                            <Link className="sidebar-link" to="/interviewer/RealTimeNotes" aria-expanded="false">
+                                <span><i className="ti ti-user"></i></span>
+                                <span className="hide-menu">RealTime Notes</span>
+                            </Link>
+                        </li>
+                        <li className="sidebar-item">
+                            <Link className="sidebar-link" to="/interviewer/ScoringSystem" aria-expanded="false">
+                                <span><i className="ti ti-briefcase"></i></span>
+                                <span className="hide-menu">Scoring System</span>
+                            </Link>
+                        </li>
+                        <li className="sidebar-item">
+                            <Link className="sidebar-link" to="/interviewer/InterviewHistory" aria-expanded="false">
+                                <span><i className="ti ti-messages"></i></span>
+                                <span className="hide-menu">Interview History</span>
+                            </Link>
+                        </li>
+                        <li className="sidebar-item">
+                            <Link className="sidebar-link" to="/interviewer/PostInterviewActions" aria-expanded="false">
+                                <span><i className="ti ti-messages"></i></span>
+                                <span className="hide-menu">PostInterview Actions</span>
+                            </Link>
+                        </li>
+                        <li className="sidebar-item">
+                            <Link className="sidebar-link" to="/interviewer/IntegrationTools" aria-expanded="false">
+                                <span><i className="ti ti-messages"></i></span>
+                                <span className="hide-menu">Integration Tools</span>
                             </Link>
                         </li>
                     </ul>

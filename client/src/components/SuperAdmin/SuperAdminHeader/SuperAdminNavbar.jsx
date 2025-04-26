@@ -269,7 +269,7 @@ const ProfileDropdown = ({ user, logout }) => {
                         </div>
                         <div className="message-body">
                             <Link
-                                to="/company/profile"
+                                to="/superadmin/profile"
                                 className="py-8 px-7 mt-8 d-flex align-items-center"
                                 onClick={() => setShowDropdown(false)}
                             >
