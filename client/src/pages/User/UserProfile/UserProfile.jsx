@@ -274,6 +274,9 @@ const UserProfile = () => {
                 formData.append('resume', profile.resume);
             }
 
+            console.log(formData);
+
+
             const response = await axios.post(
                 `${server}/api/v1/candidate/createprofile`,
                 formData,
@@ -441,98 +444,98 @@ const UserProfile = () => {
                                             </div>
                                             <div className="d-flex flex-column align-items-start gap-4">
                                                 <div className="w-100 text-md-start">
-                                                {editMode ? (
-                                                    <>
-                                                        <input
-                                                            type="text"
-                                                            name="fullname"
-                                                            value={profile.fullname}
-                                                            onChange={handleInputChange}
-                                                            className="form-control form-control-lg mb-2"
-                                                            placeholder='Full Name'
-                                                            required
-                                                        />
-                                                        <input
-                                                            type="text"
-                                                            name="headline"
-                                                            value={profile.headline}
-                                                            onChange={handleInputChange}
-                                                            className="form-control mb-2"
-                                                            placeholder='Headline'
-                                                            required
-                                                        />
-                                                        <input
-                                                            type="text"
-                                                            name="location"
-                                                            value={profile.location}
-                                                            onChange={handleInputChange}
-                                                            className="form-control"
-                                                            placeholder='Location'
-                                                            required
-                                                        />
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <h1 className="mb-2">{profile.fullname}</h1>
-                                                        <h2 className="h4 text-muted mb-2">{profile.headline}</h2>
-                                                        <p className="text-muted mb-0">{profile.location}</p>
-                                                    </>
-                                                )}
-                                            </div>
-                                            <div className="mt-3 mt-md-0 d-flex flex-column flex-sm-row gap-2">
-                                                <button
-                                                    type={editMode ? "submit" : "button"}
-                                                    className={`btn ${editMode ? 'btn-success' : 'btn-primary'} btn-sm`}
-                                                    style={{
-                                                        backgroundColor: !editMode && '#5D87FF',
-                                                        borderColor: !editMode && '#5D87FF'
-                                                    }}
-                                                    // onClick={!editMode ? (e) => {
-                                                    //     e.preventDefault(); 
-                                                    //     setEditMode(true);
-                                                    // } : undefined}
-                                                    onClick={!editMode ? handleEditClick : undefined}
-                                                    disabled={isSubmitting}
-                                                >
-                                                    {isSubmitting ? (
+                                                    {editMode ? (
                                                         <>
-                                                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                                            Saving...
+                                                            <input
+                                                                type="text"
+                                                                name="fullname"
+                                                                value={profile.fullname}
+                                                                onChange={handleInputChange}
+                                                                className="form-control form-control-lg mb-2"
+                                                                placeholder='Full Name'
+                                                                required
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                name="headline"
+                                                                value={profile.headline}
+                                                                onChange={handleInputChange}
+                                                                className="form-control mb-2"
+                                                                placeholder='Headline'
+                                                                required
+                                                            />
+                                                            <input
+                                                                type="text"
+                                                                name="location"
+                                                                value={profile.location}
+                                                                onChange={handleInputChange}
+                                                                className="form-control"
+                                                                placeholder='Location'
+                                                                required
+                                                            />
                                                         </>
                                                     ) : (
                                                         <>
-                                                            <i className="ti ti-user-edit me-2"></i>
-                                                            {editMode ? 'Save Profile' : 'Edit Profile'}
+                                                            <h1 className="mb-2">{profile.fullname}</h1>
+                                                            <h2 className="h4 text-muted mb-2">{profile.headline}</h2>
+                                                            <p className="text-muted mb-0">{profile.location}</p>
                                                         </>
                                                     )}
-                                                </button>
-
-                                                {!editMode && profile.resume && (
-                                                    <a
-                                                        href={profile.resume ? previewResume : profile.resume?.url}
-                                                        download
-                                                        className="btn btn-sm btn-primary"
-                                                        style={{ backgroundColor: '#5D87FF', borderColor: '#5D87FF' }}
-                                                    >
-                                                        <i className="ti ti-download me-1"></i>
-                                                        Download Resume
-                                                    </a>
-                                                )}
-
-                                                {editMode && (
+                                                </div>
+                                                <div className="mt-3 mt-md-0 d-flex flex-column flex-sm-row gap-2">
                                                     <button
-                                                        type="button"
-                                                        className="btn btn-sm btn-secondary"
-                                                        onClick={() => {
-                                                            setEditMode(false);
-                                                            setSubmitMessage({ type: '', text: '' });
+                                                        type={editMode ? "submit" : "button"}
+                                                        className={`btn ${editMode ? 'btn-success' : 'btn-primary'} btn-sm`}
+                                                        style={{
+                                                            backgroundColor: !editMode && '#5D87FF',
+                                                            borderColor: !editMode && '#5D87FF'
                                                         }}
+                                                        // onClick={!editMode ? (e) => {
+                                                        //     e.preventDefault(); 
+                                                        //     setEditMode(true);
+                                                        // } : undefined}
+                                                        onClick={!editMode ? handleEditClick : undefined}
                                                         disabled={isSubmitting}
                                                     >
-                                                        Cancel
+                                                        {isSubmitting ? (
+                                                            <>
+                                                                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                                                Saving...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <i className="ti ti-user-edit me-2"></i>
+                                                                {editMode ? 'Save Profile' : 'Edit Profile'}
+                                                            </>
+                                                        )}
                                                     </button>
-                                                )}
-                                            </div>
+
+                                                    {!editMode && profile.resume && (
+                                                        <a
+                                                            href={profile.resume ? previewResume : profile.resume?.url}
+                                                            download
+                                                            className="btn btn-sm btn-primary"
+                                                            style={{ backgroundColor: '#5D87FF', borderColor: '#5D87FF' }}
+                                                        >
+                                                            <i className="ti ti-download me-1"></i>
+                                                            Download Resume
+                                                        </a>
+                                                    )}
+
+                                                    {editMode && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-sm btn-secondary"
+                                                            onClick={() => {
+                                                                setEditMode(false);
+                                                                setSubmitMessage({ type: '', text: '' });
+                                                            }}
+                                                            disabled={isSubmitting}
+                                                        >
+                                                            Cancel
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -915,7 +918,7 @@ const UserProfile = () => {
                                                                     <div className="col-md-3">
                                                                         <label className="form-label">Start Date</label>
                                                                         <input
-                                                                            type="text"
+                                                                            type="date"
                                                                             value={exp.startDate}
                                                                             onChange={(e) => handleArrayChange('experience', index, 'startDate', e.target.value)}
                                                                             placeholder="YYYY-MM"
@@ -926,7 +929,7 @@ const UserProfile = () => {
                                                                     <div className="col-md-3">
                                                                         <label className="form-label">End Date</label>
                                                                         <input
-                                                                            type="text"
+                                                                            type="date"
                                                                             value={exp.endDate}
                                                                             onChange={(e) => handleArrayChange('experience', index, 'endDate', e.target.value)}
                                                                             placeholder="YYYY-MM or Present"

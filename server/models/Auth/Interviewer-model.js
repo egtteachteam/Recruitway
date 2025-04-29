@@ -160,6 +160,10 @@ const interviewerProfileSchema = new Schema({
     certifications: [certificationSchema],
     languages: [languageSchema],
     socialMedia: socialMediaSchema,
+    lastActive: {
+        type: Date,
+        default: Date.now
+    }
     // rating: {
     //     type: Number,
     //     default: 0

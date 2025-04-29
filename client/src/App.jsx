@@ -65,6 +65,7 @@ import FeedbackModeration from './pages/SuperAdmin/superadminoverview/FeedbackMo
 import SystemSettings from './pages/SuperAdmin/superadminoverview/SystemSettings/systemsettings';
 import SuperAdminProfile from './pages/SuperAdmin/SuperAdminProfile/SuperAdminProfile';
 import SuperAdminAllUser from './pages/SuperAdmin/SuperAdminAllUser/SuperAdminAllUser';
+import CompanyCandidateProfile from './pages/Company/CompanyCandidate/CompanyCandidateProfile';
 
 function App() {
 
@@ -151,6 +152,7 @@ function App() {
         }>
           <Route path='dashboard' element={<CompanyDashBoard />} />
           <Route path='candidates' element={<CompanyCandidate />} />
+          <Route path="candidate-profile" element={<CompanyCandidateProfile />} />
           <Route path='interviewers' element={<CompanyInterviewers />} />
           <Route path='report' element={<CompanyReport />} />
           <Route path='job-posts' element={<CompanyJobPosts />} />

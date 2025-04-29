@@ -136,8 +136,7 @@ const AuthProvider = ({ children }) => {
 
     const updateUser = async (newUserData) => {
         try {
-            const { data } = await axios.patch(
-                `${server}/api/v1/auth/update`,
+            const { data } = await axios.patch(`${server}/api/v1/auth/update`,
                 newUserData,
                 {
                     headers: {

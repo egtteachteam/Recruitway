@@ -1,6 +1,11 @@
 const { Schema, model } = require("mongoose");
 
-const jonDetailsSchema = new Schema({
+const jobSchema = new Schema({
+    userId: {
+        type: Schema.Types.ObjectId,
+        ref: "Auth",
+        required: true,
+    },
     title: {
         type: String,
         required: true
@@ -47,19 +52,9 @@ const jonDetailsSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ["Active", "Inactive"],
+        enum: ["Active", "Inactive", "Draft"],
         required: true
     }
-})
-
-const jobSchema = new Schema({
-    userId: {
-        type: Schema.Types.ObjectId,
-        ref: "Auth",
-        required: true,
-        unique: true
-    },
-    jobs: [jonDetailsSchema]
 }, { timestamps: true });
 
 const Job = model("Job", jobSchema);

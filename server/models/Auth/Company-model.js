@@ -57,6 +57,11 @@ const companySchema = new Schema({
         required: true,
         trim: true
     },
+    email: {
+        type: String,
+        required: [true, 'Email is required'],
+        trim: true
+    },
     tagline: {
         type: String,
         required: true,
@@ -122,7 +127,11 @@ const companySchema = new Schema({
     des: [genericKeyValueSchema],
     departments: [genericKeyValueSchema],
     locations: [locationSchema],
-    socialMedia: socialMediaSchema
+    socialMedia: socialMediaSchema,
+    lastActive: {
+        type: Date,
+        default: Date.now
+    }
 }, { timestamps: true });
 
 const CompanyProfile = model("CompanyProfile", companySchema);

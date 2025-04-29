@@ -208,14 +208,14 @@ const forgotPassword = async (req, res) => {
             port: 465,
             secure: true,
             auth: {
-                user: "no-reply@arkayalighting.com",
-                pass: "no-replyArkaya@1008",
+                user: "no-reply@anand",
+                pass: "no-replyAnand",
             },
         });
 
         const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
         const mailOptions = {
-            from: "no-reply@arkayalighting.com",
+            from: "no-reply@anand",
             to: email,
             subject: 'Password Reset Request',
             text: `Click the link to reset your password: ${resetLink}`,
@@ -301,23 +301,23 @@ const deleteAccount = async (req, res) => {
             port: 465,
             secure: true,
             auth: {
-                user: "no-reply@arkayalighting.com",
-                pass: "no-replyArkaya@1008",
+                user: "no-reply@anand",
+                pass: "no-replyAnand",
             },
         });;
 
         const mailOptions = {
-            from: "no-reply@arkayalighting.com",
+            from: "no-reply@anand",
             to: user.email,
             subject: 'Account Deletion Confirmation',
-            text: `Dear ${user.name},\n\nWe are sorry to see you go. Your account has been successfully deleted along with all associated data. If this was a mistake or you wish to rejoin, feel free to contact us.\n\nBest regards,\nArkayaLighting`,
+            text: `Dear ${user.name},\n\nWe are sorry to see you go. Your account has been successfully deleted along with all associated data. If this was a mistake or you wish to rejoin, feel free to contact us.\n\nBest regards,\nRecruitway`,
             html: `
                     <p>Dear ${user.name},</p>
                     <p>We are sorry to see you go. Your account has been successfully deleted along with all associated data.</p>
                     <p>If this was a mistake or you wish to rejoin, feel free to contact us at
-                    <a href="mailto:contact@arkayalighting.com">contact@arkayalighting.com</a>.</p>
+                    <a href="mailto:contact@recruitway.ai">contact@recruitway.ai</a>.</p>
                     <p>Best regards,</p>
-                    <p>ArkayaLighting</p>
+                    <p>Recruitway</p>
                 `,
         };
 

@@ -1,7 +1,7 @@
 import React from 'react';
 
 const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm }) => {
-    if (!isOpen) return null; // Don't render if the modal is not open.
+    if (!isOpen) return null;
 
     return (
         <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">

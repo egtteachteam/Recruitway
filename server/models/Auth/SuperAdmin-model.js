@@ -14,10 +14,8 @@ const superAdminSchema = new Schema({
     },
     email: {
         type: String,
-        required: true,
-        trim: true,
-        lowercase: true,
-        unique: true
+        required: [true, 'Email is required'],
+        trim: true
     },
     phone: {
         type: String,

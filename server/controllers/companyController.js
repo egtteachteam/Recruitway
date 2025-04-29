@@ -3,7 +3,9 @@ const Interview = require('../models/Interview');
 const User = require('../models/User');
 const cloudinary = require("../config/cloudinary");
 const Job = require('../models/Job');
-const { all } = require('../routes/authRoutes');
+const ApplyJob = require('../models/ApplyJob');
+const CandidateProfile = require('../models/Auth/Candidate-model');
+const Auth = require('../models/Auth/Auth-model');
 
 const getProfile = async (req, res) => {
     try {
@@ -55,9 +57,12 @@ const createProfile = async (req, res) => {
             profilePictureUrl = profilePictureResult.secure_url;
         }
 
+        const user = await Auth.findOne({ _id: userId }).select("email")
+
         // Parse all input data
         const parsedData = {
             fullname: body.fullname || '',
+            email: user.email || "",
             tagline: body.tagline || '',
             industry: body.industry || '',
             companySize: body.companySize || '',
@@ -138,21 +143,23 @@ const createJobPost = async (req, res) => {
     const userId = req?.user?._id;
 
     try {
-        let jobDoc = await Job.findOne({ userId });
+        const newJobPost = new Job({
+            userId,
+            title: jobData.title,
+            company: jobData.company,
+            location: jobData.location,
+            salary: jobData.salary,
+            type: jobData.type,
+            experience: jobData.experience,
+            description: jobData.description,
+            requirements: jobData.requirements,
+            skills: jobData.skills,
+            status: jobData.status,
+        });
 
-        if (jobDoc) {
-            jobDoc.jobs.push(jobData);
-            await jobDoc.save();
-        } else {
-            const newJobDoc = new Job({
-                userId,
-                jobs: [jobData]
-            });
-            await newJobDoc.save();
-        }
+        await newJobPost.save();
 
-        return res.status(200).json({ message: "Job post added successfully", jobDoc });
-
+        return res.status(200).json({ message: "Job post added successfully", jobDoc: newJobPost });
     } catch (error) {
         console.error("Error creating job post:", error);
         return res.status(500).json({ error: "Internal server error" });
@@ -163,18 +170,18 @@ const getAllJob = async (req, res) => {
     const userId = req?.user?._id;
 
     try {
-        const jobData = await Job.findOne({ userId }).select('jobs');  // Retrieve only the jobs field
+        // Retrieve all job posts for the specific user
+        const jobData = await Job.find({ userId }).sort({ posted: -1 });
 
-        if (!jobData || !jobData.jobs || jobData.jobs.length === 0) {
+        if (!jobData || jobData.length === 0) {
             return res.status(404).json({ message: "No jobs found for this Company." });
         }
 
-        const sortedJobs = jobData.jobs.sort((a, b) => b.posted - a.posted);
+        const sortedJobs = jobData.sort((a, b) => b.posted - a.posted);
 
         res.status(200).json({ jobs: sortedJobs });
-
     } catch (error) {
-        // console.error(error);
+        console.error("Error fetching jobs:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
 };
@@ -185,27 +192,181 @@ const updateJobPost = async (req, res) => {
     const userId = req?.user?._id;
 
     try {
-        const jobDoc = await Job.findOne({ userId });
+        // Find the job by jobId and userId
+        const jobDoc = await Job.findOne({ _id: jobId, userId });
 
         if (!jobDoc) {
-            return res.status(404).json({ message: "Job document not found for this user." });
+            return res.status(404).json({ message: "Job not found or you don't have permission to update it." });
         }
 
-        const jobIndex = jobDoc.jobs.findIndex(job => job._id.toString() === jobId);
-        if (jobIndex === -1) {
-            return res.status(404).json({ message: "Job not found." });
-        }
-
-        jobDoc.jobs[jobIndex] = { ...jobDoc.jobs[jobIndex]._doc, ...updatedJobData };
+        // Update the job document with the new data
+        Object.assign(jobDoc, updatedJobData);
 
         await jobDoc.save();
 
-        return res.status(200).json(jobDoc.jobs[jobIndex]);
+        return res.status(200).json({ message: "Job post updated successfully", jobDoc });
     } catch (error) {
         console.error("Error updating job:", error);
         return res.status(500).json({ message: "Failed to update job post." });
     }
 };
+
+const deleteJobPost = async (req, res) => {
+    const { jobId } = req.params;
+    const userId = req?.user?._id;
+
+    try {
+        // Find the job by jobId and userId, then delete it
+        const job = await Job.findOneAndDelete({ _id: jobId, userId });
+
+        if (!job) {
+            return res.status(404).json({ message: "Job not found or unauthorized access." });
+        }
+
+        res.status(200).json({ message: "Job deleted successfully." });
+    } catch (error) {
+        console.error("Error deleting job post:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+};
+
+const getAllJobApplicants = async (req, res) => {
+    try {
+        const userId = req.user._id; // Employer's user ID
+
+        // Find all jobs posted by this employer
+        const employerJobs = await Job.find({ userId }).select('_id title company location salary type experience');
+
+        if (!employerJobs || employerJobs.length === 0) {
+            return res.status(404).json({ message: "No jobs found for this employer" });
+        }
+
+        // Extract job IDs
+        const jobIds = employerJobs.map(job => job._id.toString());
+
+        // Create a job map to easily attach job details later
+        const jobMap = employerJobs.reduce((acc, job) => {
+            acc[job._id.toString()] = {
+                title: job.title,
+                company: job.company,
+                location: job.location,
+                salary: job.salary,
+                type: job.type,
+                experience: job.experience
+            };
+            return acc;
+        }, {});
+
+        // Find all applications related to these jobs
+        const applications = await ApplyJob.find({ "items.jobId": { $in: jobIds } })
+            .populate('userId', '_id') // populate only _id of user to match with CandidateProfile
+            .lean();
+
+        if (!applications || applications.length === 0) {
+            return res.status(404).json({ message: "No applicants found for your jobs" });
+        }
+
+        // Collect userIds
+        const userIds = applications.map(app => app.userId._id.toString());
+
+        // Fetch candidate profiles
+        const candidateProfiles = await CandidateProfile.find({ userId: { $in: userIds } }).lean();
+
+        // Map userId to candidateProfile
+        const profileMap = candidateProfiles.reduce((acc, profile) => {
+            acc[profile.userId.toString()] = profile;
+            return acc;
+        }, {});
+
+        // Final format
+        const allApplicants = applications.flatMap(app =>
+            app.items
+                .filter(item => jobIds.includes(item.jobId.toString()))
+                .map(item => ({
+                    applicationId: item._id,
+                    applicationJobId: item.jobId,
+                    status: item.status,
+                    appliedAt: app.createdAt,
+                    jobDetails: jobMap[item.jobId.toString()] || null,
+                    candidateProfile: profileMap[app.userId._id.toString()] || null
+                }))
+        );
+
+        res.status(200).json({ success: true, applicants: allApplicants });
+    } catch (error) {
+        console.error("Error fetching applicants:", error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+const getJobApplicants = async (req, res) => {
+    try {
+        const { jobId } = req.params;
+        const userId = req.user._id;  // Employer's user ID
+
+        // Verify the job belongs to this employer
+        const job = await Job.findOne({ userId, _id: jobId });
+        if (!job) {
+            return res.status(404).json({ message: "Job not found or unauthorized" });
+        }
+
+        // Get applicants for the specific job
+        const applicants = await ApplyJob.find({ "items.jobId": jobId })
+            .populate('items.userId', 'name email')  // Populate user details (name, email) from Auth model
+            .lean();
+
+        if (!applicants || applicants.length === 0) {
+            return res.status(404).json({ message: "No applicants for this job" });
+        }
+
+        res.status(200).json(applicants);
+    } catch (error) {
+        console.error("Error fetching applicants:", error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+};
+
+const updateApplicationStatus = async (req, res) => {
+    try {
+        const { applicationId } = req.params;
+        const { status, candidateId } = req.body;
+        const userId = req.user._id;
+
+        // Find the application
+        const application = await ApplyJob.findOne({ userId: candidateId })
+
+        if (!application) {
+            return res.status(404).json({ message: "Application not found" });
+        }
+
+        const job = application.items.find((item) =>
+            item.jobId.toString() === applicationId.toString()
+        );
+
+        // Verify the job belongs to this employer
+        // const job = await Job.findOne({
+        //     userId,
+        //     _id: application.items.applicationId
+        // });
+
+        // if (!job) {
+        //     return res.status(403).json({ message: "Unauthorized to update this application" });
+        // }
+
+        // Update application status
+
+        job.status = status;
+        await application.save();
+
+        res.status(200).json({
+            message: `Candidate Got ${status}`,
+            // message: "Application status updated successfully",
+        });
+    } catch (error) {
+        console.error("Error updating application status:", error.message);
+        res.status(500).json({ message: "Server error", error: error.message });
+    }
+}
 
 const getDashboard = async (req, res) => {
     try {
@@ -215,30 +376,6 @@ const getDashboard = async (req, res) => {
         res.status(500).json({ message: 'Error retrieving company dashboard data' });
     }
 };
-
-const deleteJobPost = async (req, res) => {
-    const { jobId } = req.params; // Job ID from URL params
-    const userId = req?.user?._id; // User ID from authentication
-
-    try {
-        // Find the job post by jobId and userId
-        const job = await Job.findOneAndUpdate(
-            { "jobs._id": jobId, userId }, // Match the jobId and userId
-            { $pull: { jobs: { _id: jobId } } }, // Remove the job from the jobs array
-            { new: true } // Return the updated document
-        );
-
-        if (!job) {
-            return res.status(404).json({ message: "Job not found or unauthorized access." });
-        }
-
-        res.status(200).json({ message: "Job deleted successfully." });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal server error" });
-    }
-};
-
 
 const scheduleInterview = async (req, res) => {
     try {
@@ -304,4 +441,7 @@ const getSuperAdmin = async (req, res) => {
     }
 };
 
-module.exports = { createProfile, getProfile, createJobPost, getAllJob, updateJobPost, deleteJobPost, getDashboard, scheduleInterview, getInterviewees, getInterviewers, cancelInterview, getSuperAdmin }
+module.exports = {
+    createProfile, getProfile, createJobPost, getAllJob, updateJobPost, deleteJobPost, getAllJobApplicants, getJobApplicants, updateApplicationStatus,
+    getDashboard, scheduleInterview, getInterviewees, getInterviewers, cancelInterview, getSuperAdmin
+}

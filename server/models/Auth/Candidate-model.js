@@ -135,6 +135,11 @@ const candidateProfileSchema = new Schema({
         required: [true, 'Full name is required'],
         trim: true
     },
+    email: {
+        type: String,
+        required: [true, 'Email is required'],
+        trim: true
+    },
     headline: {
         type: String,
         required: [true, 'Headline is required'],
@@ -172,6 +177,10 @@ const candidateProfileSchema = new Schema({
     languages: [languageSchema],
     projects: [projectSchema],
     socialMedia: socialMediaSchema,
+    lastActive: {
+        type: Date,
+        default: Date.now
+    }
 }, {
     timestamps: true
 });

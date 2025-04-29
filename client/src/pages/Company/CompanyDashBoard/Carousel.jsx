@@ -2,8 +2,11 @@ import React from 'react';
 import OwlCarousel from 'react-owl-carousel';
 import 'owl.carousel/dist/assets/owl.carousel.css';
 import 'owl.carousel/dist/assets/owl.theme.default.css';
+import { useCompanyContext } from '../../../context/company-context';
 
 const Carousel = () => {
+
+  const { jobList, allAppliedCandidates } = useCompanyContext()
 
   const options = {
     loop: true,
@@ -31,7 +34,7 @@ const Carousel = () => {
             <div className="text-center">
               <img src="https://demos.adminmart.com/premium/bootstrap/modernize-bootstrap/package/dist/images/svgs/icon-user-male.svg" width="50" height="50" className="mb-3" alt="" />
               <p className="fw-semibold fs-3 text-primary mb-1"> Candidates </p>
-              <h5 className="fw-semibold text-primary mb-0">96</h5>
+              <h5 className="fw-semibold text-primary mb-0">{allAppliedCandidates.length}</h5>
             </div>
           </div>
         </div>

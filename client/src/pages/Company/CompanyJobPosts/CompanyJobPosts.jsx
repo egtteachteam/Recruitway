@@ -1,9 +1,8 @@
-import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
 import { Link } from 'react-router-dom';
-import { useAuthContext } from '../../../context/auth-context';
 import DeleteConfirmaton from '../../../components/DeleteConfirmaton';
+import { useCompanyContext } from '../../../context/company-context';
+import formatDateToRelative from '../../../Helper/dateFormatter';
 
 // const JobPostCard = ({ isOpen, job, onClose }) => {
 //     // const { title, company, location, salary, type, experience, posted, description, requirements, skills, applicants, status } = job;
@@ -1867,9 +1866,11 @@ import DeleteConfirmaton from '../../../components/DeleteConfirmaton';
 
 
 
-const JobPostCard = ({ isOpen, job, onClose, handleSave }) => {
+const JobPostCard = ({ isOpen, job, onClose, setJobPostOpen, jobList, setJobList }) => {
     const [editMode, setEditMode] = useState(false);
     const [editedJob, setEditedJob] = useState({ ...job });
+
+    const { handleJobEdit, handleConfirmDeleteJob } = useCompanyContext()
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -1921,7 +1922,7 @@ const JobPostCard = ({ isOpen, job, onClose, handleSave }) => {
     };
 
     const handleEdit = async () => {
-        await handleSave(editedJob._id, editedJob)
+        await handleJobEdit(editedJob._id, editedJob)
         setEditMode(false);
     }
 
@@ -1932,29 +1933,19 @@ const JobPostCard = ({ isOpen, job, onClose, handleSave }) => {
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [jobToDelete, setJobToDelete] = useState(null);
-    const {server,token} = useAuthContext()
 
-    const handleDeleteJob = (jobId) => {
+    const handleDeleteJobModal = (jobId) => {
         setJobToDelete(jobId);
         setIsModalOpen(true);
     };
 
-    const handleConfirmDeleteJob = async () => {
+    const handleDeleteJob = async () => {
         try {
-            await axios.delete(`${server}/api/v1/company/delete-job/${jobToDelete}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-            // Optionally update state to remove the deleted job from the list
-            // Example: filter out the deleted job from the jobs array
-            // setJobs(jobs.filter(job => job._id !== jobToDelete));
-
-            // Close the modal after deletion
+            await handleConfirmDeleteJob(jobToDelete);
             setIsModalOpen(false);
+            setJobPostOpen(false);
         } catch (error) {
-            console.error('Error deleting job:', error);
-            // Handle any error (e.g., show an error message)
+            console.error("Failed to delete job:", error);
         }
     };
 
@@ -2004,7 +1995,7 @@ const JobPostCard = ({ isOpen, job, onClose, handleSave }) => {
                                                     <i className="ti ti-building me-1"></i>
                                                     {company}
                                                 </span>
-                                                <span className={`badge rounded-pill px-3 py-2 d-flex align-items-center ${status === 'Active' ? 'bg-success' : 'bg-danger'} bg-opacity-10 text-${status === 'Active' ? 'success' : 'danger'}`}>
+                                                {/* <span className={`badge rounded-pill px-3 py-2 d-flex align-items-center ${status === 'Active' ? 'bg-success' : 'bg-danger'} bg-opacity-10 text-${status === 'Active' ? 'success' : 'danger'}`}>
                                                     {editMode ? (
                                                         <select
                                                             name="status"
@@ -2014,6 +2005,7 @@ const JobPostCard = ({ isOpen, job, onClose, handleSave }) => {
                                                         >
                                                             <option value="Active">Active</option>
                                                             <option value="Inactive">Inactive</option>
+                                                            <option value="Draft">Draft</option>
                                                         </select>
                                                     ) : (
                                                         <>
@@ -2021,7 +2013,32 @@ const JobPostCard = ({ isOpen, job, onClose, handleSave }) => {
                                                             {status}
                                                         </>
                                                     )}
+                                                </span> */}
+                                                <span
+                                                    className={`badge rounded-pill px-3 py-2 d-flex align-items-center ${status === 'Active' ? 'bg-success' : (status === 'Inactive' ? 'bg-danger' : 'bg-warning')} bg-opacity-10 text-${status === 'Active' ? 'success' : (status === 'Inactive' ? 'danger' : 'warning')}`}
+                                                >
+                                                    {editMode ? (
+                                                        <select
+                                                            name="status"
+                                                            value={status}
+                                                            onChange={handleInputChange}
+                                                            className="form-select form-select-sm bg-transparent border-0"
+                                                        >
+                                                            <option value="Active">Active</option>
+                                                            <option value="Inactive">Inactive</option>
+                                                            <option value="Draft">Draft</option>
+                                                        </select>
+                                                    ) : (
+                                                        <>
+                                                            <i
+                                                                className={`ti ti-${status === 'Active' ? 'circle-check' : (status === 'Inactive' ? 'circle-x' : 'circle-dash')}`}
+                                                                style={{ fontSize: '1.2em' }}  // Adjust icon size if needed
+                                                            ></i>
+                                                            {status}
+                                                        </>
+                                                    )}
                                                 </span>
+
                                             </div>
                                         </div>
                                         {!editMode && (
@@ -2052,7 +2069,7 @@ const JobPostCard = ({ isOpen, job, onClose, handleSave }) => {
                                                         </button>
                                                     </li>
                                                     <li>
-                                                        <button className="dropdown-item d-flex align-items-center text-danger">
+                                                        <button className="dropdown-item d-flex align-items-center text-danger" onClick={() => handleDeleteJobModal(job._id)}>
                                                             <i className="ti ti-trash me-2"></i> Delete Post
                                                         </button>
                                                     </li>
@@ -2149,7 +2166,7 @@ const JobPostCard = ({ isOpen, job, onClose, handleSave }) => {
                                     <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
                                         <div className="d-flex align-items-center text-muted">
                                             <i className="ti ti-calendar-event me-2 fs-5 text-primary"></i>
-                                            <span className="text-dark">Posted: {posted}</span>
+                                            <span className="text-dark">Posted: {formatDateToRelative(posted)}</span>
                                         </div>
                                         {!editMode && (
                                             <div className="d-flex align-items-center text-muted">
@@ -2301,7 +2318,7 @@ const JobPostCard = ({ isOpen, job, onClose, handleSave }) => {
                                                 >
                                                     <i className="ti ti-edit me-2"></i> Edit Post
                                                 </button>
-                                                <button className="btn btn-outline-danger btn-sm flex-grow-1 d-flex align-items-center justify-content-center" onClick={handleDeleteJob}>
+                                                <button className="btn btn-outline-danger btn-sm flex-grow-1 d-flex align-items-center justify-content-center" onClick={() => handleDeleteJobModal(job._id)}>
                                                     <i className="ti ti-trash me-2"></i> Delete Post
                                                 </button>
                                             </div>
@@ -2316,42 +2333,26 @@ const JobPostCard = ({ isOpen, job, onClose, handleSave }) => {
             <DeleteConfirmaton
                 isOpen={isModalOpen}
                 onClose={handleCancelDelete}
-                onConfirm={handleConfirmDeleteJob}
+                onConfirm={handleDeleteJob}
             />
         </>
     );
 };
 
 const CompanyJobPosts = () => {
-    const [jobList, setJobList] = useState([])
-    const [isLoading, setIsLoading] = useState(false)
+
     const [jobPostOpen, setJobPostOpen] = useState(false)
     const [selectedJobPost, setSelectedJobPost] = useState(null);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectOption, setSelectOption] = useState('');
+    const [filteredJobs, setFilteredJobs] = useState([]);
     const [currentPage, setCurrentPage] = useState(1);
     const jobListPerPage = 10;
-    const { server, token } = useAuthContext()
-
-    const getAllJobs = async () => {
-        setIsLoading(true)
-        try {
-            const response = await axios.get(`${server}/api/v1/company/get-all-job`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    },
-
-                }
-            )
-            setJobList(response.data.jobs);
-            setIsLoading(false)
-        } catch (error) {
-            toast.error(error.response.data.message)
-        }
-    }
+    const { getAllJobs, isLoading, jobList } = useCompanyContext()
 
     useEffect(() => {
         getAllJobs()
-    }, [])
+    }, [currentPage])
 
     const handleViewJobPost = (jobpost) => {
         setJobPostOpen(true);
@@ -2363,29 +2364,34 @@ const CompanyJobPosts = () => {
         setSelectedJobPost(null);
     };
 
-    // Pagination logic
+    const filterJob = () => {
+        let filteredJobs;
+        if (searchTerm) {
+            filteredJobs = jobList.filter(job =>
+                job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                job.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                job.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
+            );
+        } else if (selectOption) {
+            filteredJobs = jobList.filter(job => job.status === selectOption);
+        } else {
+            filteredJobs = jobList;
+        }
+
+        setFilteredJobs(filteredJobs);
+    };
+
+    useEffect(() => {
+        filterJob();
+    }, [searchTerm, selectOption, jobList]);
+
+
     const indexOfLastJobList = currentPage * jobListPerPage;
     const indexOfFirstJobList = indexOfLastJobList - jobListPerPage;
-    const currentJobList = jobList.slice(indexOfFirstJobList, indexOfLastJobList);
-    const totalPages = Math.ceil(jobList.length / jobListPerPage);
+    const currentJobList = filteredJobs?.slice(indexOfFirstJobList, indexOfLastJobList);
+    const totalPages = Math.ceil(filteredJobs?.length / jobListPerPage);
 
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-    const handleSave = async (id, data) => {
-        try {
-            const res = await axios.patch(`${server}/api/v1/company/update-job/${id}`,
-                data,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    },
-                }
-            )
-            await getAllJobs()
-        } catch (error) {
-            toast.error(error.response.data.message)
-        }
-    };
 
     return (
         <div className="container-fluid">
@@ -2402,19 +2408,32 @@ const CompanyJobPosts = () => {
                                 type="text"
                                 className="form-control form-control-sm ps-5"
                                 placeholder="Search jobs..."
+                                onChange={(e) => {
+                                    setSearchTerm(e.target.value);
+                                    filterJob();
+                                }}
                             />
                             <i className="ti ti-search position-absolute start-0 top-50 translate-middle-y ms-3 text-muted"></i>
                         </div>
-                        <select className="form-select form-select-sm w-auto">
-                            <option>All Statuses</option>
-                            <option>Active</option>
-                            <option>Draft</option>
-                            <option>Closed</option>
+
+                        <select
+                            className="form-select form-select-sm w-auto"
+                            onChange={(e) => {
+                                setSelectOption(e.target.value);
+                                filterJob();
+                            }}
+                        >
+                            <option value="">All Statuses</option>
+                            <option value="Active">Active</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Inactive">Inactive</option>
                         </select>
+
                         <Link to="/company/create-job-post" className="btn btn-sm btn-primary">
                             Create New Job
                         </Link>
                     </div>
+
                 </div>
 
                 {/* Table */}
@@ -2442,19 +2461,19 @@ const CompanyJobPosts = () => {
                                                 </div>
                                             </td>
                                         </tr>
-                                    ) : currentJobList.length === 0 ? (
+                                    ) : currentJobList?.length === 0 ? (
                                         <tr>
                                             <td colSpan="6" className="text-center py-4 text-muted">
                                                 No Job found. Add your first Job.
                                             </td>
                                         </tr>
                                     ) : (
-                                        currentJobList.map((job) => (
+                                        currentJobList?.map((job) => (
                                             <tr key={job._id}>
                                                 <td className="d-none d-sm-table-cell">{job.title || <span className="text-muted">N/A</span>}</td>
                                                 <td>{job.location}</td>
                                                 <td className="d-none d-md-table-cell">{job.experience}</td>
-                                                <td className="d-none d-lg-table-cell">{job.posted}</td>
+                                                <td className="d-none d-lg-table-cell">{formatDateToRelative(job.posted)}</td>
                                                 <td className="">{job.status}</td>
                                                 <td>
                                                     <button className="btn btn-sm btn-outline-primary" onClick={() => handleViewJobPost(job)}>
@@ -2476,7 +2495,8 @@ const CompanyJobPosts = () => {
                         isOpen={jobPostOpen}
                         job={selectedJobPost}
                         onClose={handleModalClose}
-                        handleSave={handleSave}
+                        setJobPostOpen={setJobPostOpen}
+                        jobList={jobList}
                     />
                     // <JobPostCard
                     //     isOpen={jobPostOpen}

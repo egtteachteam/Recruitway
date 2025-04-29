@@ -1,84 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCandidateContext } from '../../../context/candidate-context';
+import { useAuthContext } from '../../../context/auth-context';
 
 const UserJobsApplied = () => {
-    const [applications, setApplications] = useState([]);
     const [filterStatus, setFilterStatus] = useState('all');
-    const [isLoading, setIsLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const jobListPerPage = 10;
     const navigate = useNavigate();
+    const { getAppliedJobs, appliedJobs, isLoading, withdrawJobApplication } = useCandidateContext()
+    const { user } = useAuthContext()
 
     useEffect(() => {
-        const fetchApplications = async () => {
-            try {
-                const mockApplications = [
-                    {
-                        id: 1,
-                        jobId: 101,
-                        title: 'Senior Frontend Developer',
-                        company: 'Tech Innovations Inc.',
-                        appliedDate: '2023-05-15',
-                        status: 'under-review', // under-review, shortlisted, rejected, hired
-                        statusDate: '2023-05-18',
-                        notes: 'Technical interview scheduled for next week',
-                        jobDetails: {
-                            location: 'San Francisco, CA (Remote)',
-                            salary: '$120,000 - $150,000',
-                            type: 'Full-time'
-                        }
-                    },
-                    {
-                        id: 2,
-                        jobId: 202,
-                        title: 'Backend Engineer',
-                        company: 'Data Systems LLC',
-                        appliedDate: '2023-05-10',
-                        status: 'shortlisted',
-                        statusDate: '2023-05-12',
-                        notes: 'Waiting for final interview confirmation',
-                        jobDetails: {
-                            location: 'New York, NY (Hybrid)',
-                            salary: '$110,000 - $140,000',
-                            type: 'Full-time'
-                        }
-                    },
-                    {
-                        id: 3,
-                        jobId: 303,
-                        title: 'UX Designer',
-                        company: 'Creative Minds Co.',
-                        appliedDate: '2023-04-28',
-                        status: 'rejected',
-                        statusDate: '2023-05-05',
-                        notes: 'Position filled internally',
-                        jobDetails: {
-                            location: 'Remote',
-                            salary: '$90,000 - $120,000',
-                            type: 'Contract'
-                        }
-                    }
-                ];
+        getAppliedJobs(user._id)
+    }, [])
 
-                setApplications(mockApplications);
-                setIsLoading(false);
-            } catch (error) {
-                console.error('Error fetching applications:', error);
-                setIsLoading(false);
-            }
-        };
-
-        fetchApplications();
-    }, []);
-
-    const filteredApplications = applications.filter(app =>
+    const filteredApplications = appliedJobs.filter(app =>
         filterStatus === 'all' || app.status === filterStatus
     );
 
     const getStatusBadge = (status) => {
         const statusMap = {
-            'under-review': { class: 'bg-info', text: 'Under Review' },
-            'shortlisted': { class: 'bg-primary', text: 'Shortlisted' },
-            'rejected': { class: 'bg-danger', text: 'Not Selected' },
-            'hired': { class: 'bg-success', text: 'Hired' }
+            'Applied': { class: 'bg-info', text: 'Applied' },
+            'Reviewed': { class: 'bg-primary', text: 'Reviewed' },
+            'Rejected': { class: 'bg-danger', text: 'Not Selected' },
+            'Shortlisted': { class: 'bg-success', text: 'Shortlisted' }
         };
         return (
             <span className={`badge ${statusMap[status]?.class || 'bg-secondary'}`}>
@@ -95,6 +41,13 @@ const UserJobsApplied = () => {
     const handleViewJob = (jobId) => {
         navigate(`/jobs/${jobId}`);
     };
+
+    const indexOfLastJobList = currentPage * jobListPerPage;
+    const indexOfFirstJobList = indexOfLastJobList - jobListPerPage;
+    const currentJobList = filteredApplications?.slice(indexOfFirstJobList, indexOfLastJobList);
+    const totalPages = Math.ceil(filteredApplications?.length / jobListPerPage);
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     if (isLoading) {
         return (
@@ -125,15 +78,15 @@ const UserJobsApplied = () => {
                                 onChange={(e) => setFilterStatus(e.target.value)}
                             >
                                 <option value="all">All Applications</option>
-                                <option value="under-review">Under Review</option>
-                                <option value="shortlisted">Shortlisted</option>
-                                <option value="rejected">Not Selected</option>
-                                <option value="hired">Hired</option>
+                                <option value="Applied">Applied</option>
+                                <option value="Reviewed">Reviewed</option>
+                                <option value="Shortlisted">Shortlisted</option>
+                                <option value="Rejected">Not Selected</option>
                             </select>
                         </div>
                     </div>
 
-                    {filteredApplications.length === 0 ? (
+                    {currentJobList.length === 0 ? (
                         <div className="card">
                             <div className="card-body text-center py-5">
                                 <i className="bi bi-briefcase display-4 text-muted mb-3"></i>
@@ -157,17 +110,17 @@ const UserJobsApplied = () => {
                         </div>
                     ) : (
                         <div className="list-group">
-                            {filteredApplications.map((application) => (
-                                <div key={application.id} className="list-group-item list-group-item-action">
+                            {currentJobList.map((application) => (
+                                <div key={application.appicationId} className="list-group-item list-group-item-action">
                                     <div className="d-flex w-100 justify-content-between">
                                         <div className="mb-2">
                                             <h5 className="mb-1">{application.title}</h5>
                                             <p className="mb-1">
-                                                <strong>{application.company}</strong> • {application.jobDetails.location}
+                                                <strong>{application.company}</strong> • {application.location}
                                             </p>
                                             <small className="text-muted">
-                                                Applied on {formatDate(application.appliedDate)} •
-                                                {application.jobDetails.type} • {application.jobDetails.salary}
+                                                Applied on {formatDate(application.appliedAt)} •
+                                                {application.type} • {application.salary}
                                             </small>
                                         </div>
                                         <div className="text-end">
@@ -180,17 +133,7 @@ const UserJobsApplied = () => {
                                         </div>
                                     </div>
 
-                                    <div className="mt-3 d-flex justify-content-between align-items-center">
-                                        <div>
-                                            {application.notes && (
-                                                <div className="alert alert-light p-2 mb-0">
-                                                    <small>
-                                                        <i className="bi bi-info-circle me-1"></i>
-                                                        {application.notes}
-                                                    </small>
-                                                </div>
-                                            )}
-                                        </div>
+                                    <div className="mt-3 d-flex justify-content-end align-items-center">
                                         <div>
                                             <button
                                                 className="btn btn-sm btn-outline-primary me-2"
@@ -198,7 +141,7 @@ const UserJobsApplied = () => {
                                             >
                                                 View Job
                                             </button>
-                                            <button className="btn btn-sm btn-outline-secondary">
+                                            <button className="btn btn-sm btn-outline-secondary" onClick={() => withdrawJobApplication(application.jobId)}>
                                                 Withdraw
                                             </button>
                                         </div>
@@ -208,13 +151,51 @@ const UserJobsApplied = () => {
                         </div>
                     )}
 
-                    {filteredApplications.length > 0 && (
-                        <div className="mt-4 text-center">
-                            <p className="text-muted">
-                                Showing {filteredApplications.length} of {applications.length} applications
-                            </p>
-                        </div>
-                    )}
+                    {/* Pagination */}
+                    <nav aria-label="Page navigation" className="mt-4">
+                        <ul className="pagination justify-content-center">
+                            <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                                <button
+                                    className="page-link btn "
+                                    onClick={() => paginate(currentPage - 1)}
+                                    disabled={currentPage === 1}
+                                >
+                                    Previous
+                                </button>
+                            </li>
+
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                let pageNum;
+                                if (totalPages <= 5) {
+                                    pageNum = i + 1;
+                                } else if (currentPage <= 3) {
+                                    pageNum = i + 1;
+                                } else if (currentPage >= totalPages - 2) {
+                                    pageNum = totalPages - 4 + i;
+                                } else {
+                                    pageNum = currentPage - 2 + i;
+                                }
+
+                                return (
+                                    <li key={pageNum} className={`page-item ${currentPage === pageNum ? 'active' : ''}`}>
+                                        <button className="page-link" onClick={() => paginate(pageNum)}>
+                                            {pageNum}
+                                        </button>
+                                    </li>
+                                );
+                            })}
+
+                            <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                                <button
+                                    className="page-link"
+                                    onClick={() => paginate(currentPage + 1)}
+                                    disabled={currentPage === totalPages}
+                                >
+                                    Next
+                                </button>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </>

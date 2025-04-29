@@ -1,166 +1,277 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useCompanyContext } from '../../../context/company-context';
+import { useNavigate } from 'react-router-dom';
 
-const candidateList = [
-    {
-        id: 1,
-        name: 'Jane Doe',
-        email: 'jane.doe@example.com',
-        phone: '+1 555-123-4567',
-        tagline: 'Passionate full-stack developer with a love for clean code',
-        skills: ['JavaScript', 'React', 'Node.js', 'MongoDB', 'Express', 'TypeScript'],
-        jobs: [
-            {
-                title: 'Frontend Developer',
-                company: 'Acme Corp',
-                duration: 'Jan 2020 - Present'
-            },
-            {
-                title: 'Full Stack Engineer',
-                company: 'Beta Ltd',
-                duration: 'Mar 2018 - Dec 2019'
-            }
-        ],
-        avatar: 'https://randomuser.me/api/portraits/women/44.jpg',
-        status: 'Active',
-        lastActive: '2 days ago'
-    },
-    {
-        id: 2,
-        name: 'John Smith',
-        email: 'john.smith@example.com',
-        phone: '+1 555-987-6543',
-        tagline: 'UI/UX designer who brings user-centric visions to life',
-        skills: ['Figma', 'Adobe XD', 'User Research', 'Prototyping', 'Wireframing', 'UX Writing'],
-        jobs: [],
-        avatar: 'https://randomuser.me/api/portraits/men/32.jpg',
-        status: 'New',
-        lastActive: 'Just now'
-    }
-];
+const CandidateCard = ({ isOpen, candidate, onClose, candidateId, applicationId }) => {
+    const navigate = useNavigate();
+    const [activeTab, setActiveTab] = useState('skills');
 
-const CandidateCard = ({ isOpen, candidate, onClose }) => {
+    const { rejectShortlist } = useCompanyContext()
+
     if (!isOpen || !candidate) return null;
 
-    const { name, email, phone, tagline, skills, jobs, avatar, status, lastActive } = candidate;
+    const { fullname, gender, phone, email, headline, skills, experience, education, certifications, languages, profilePicture, status, lastActive } = candidate?.candidateProfile;
+
+    // console.log(fullname, gender, phone, email, headline, skills, experience, education, certifications, languages, profilePicture, status, lastActive);
+
+    const handleViewFullProfile = () => {
+        navigate('/company/candidate-profile', { state: { candidate: candidate?.candidateProfile } });
+    };
 
     return (
         <>
             <div className={`modal fade ${isOpen ? 'show d-block' : ''}`} tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                <div className="modal-dialog modal-lg">
-                    <div className="modal-content">
-                        {/* Header */}
-                        <div className="modal-header px-3 py-4">
-                            <h5 className="modal-title">Full Application</h5>
-                            <button type="button" className="btn-close" onClick={onClose} aria-label="Close"></button>
+                <div className="modal-dialog modal-lg modal-dialog-centered">
+                    <div className="modal-content border-0 shadow-lg">
+                        <div className="modal-header px-4 py-3 bg-primary">
+                            <h5 className="modal-title fs-5 fw-semibold text-white">Candidate Application</h5>
+                            <button
+                                type="button"
+                                className="btn-close btn-close-white"
+                                onClick={onClose}
+                                aria-label="Close"
+                            ></button>
                         </div>
 
-                        {/* Body */}
-                        <div className="modal-body px-3">
-                            <div className="d-flex flex-column flex-md-row align-items-start mt-2">
-                                <div className="mb-3 mb-md-0 me-md-4 text-center">
-                                    <img
-                                        src={avatar || 'https://via.placeholder.com/80'}
-                                        alt={name}
-                                        className="rounded-circle border"
-                                        style={{ width: '80px', height: '80px', objectFit: 'cover' }}
-                                    />
+                        <div className="modal-body p-0">
+                            <div className="d-flex flex-column flex-md-row">
+                                {/* Left Sidebar */}
+                                <div className="col-md-4 p-4 bg-light">
+                                    <div className="text-center mb-4">
+                                        <img
+                                            src={profilePicture || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(fullname) + '&background=random'}
+                                            alt={fullname}
+                                            className="rounded-circle border shadow-sm"
+                                            style={{
+                                                width: '120px',
+                                                height: '120px',
+                                                objectFit: 'cover',
+                                                border: '3px solid white'
+                                            }}
+                                        />
+                                        <h4 className="mt-3 mb-1 fw-bold">{fullname}</h4>
+                                        <p className="text-muted mb-3">{headline || 'No headline available'}</p>
+
+                                        {/* <div className="d-flex justify-content-center gap-2 mb-4">
+                                            <span className={`badge rounded-pill bg-${status === 'Active' ? 'success' : 'info'} bg-opacity-10 text-${status === 'Active' ? 'success' : 'info'}`}>
+                                                {status}
+                                            </span>
+                                            <span className="badge rounded-pill bg-secondary bg-opacity-10 text-secondary">
+                                                Last active: {lastActive}
+                                            </span>
+                                        </div> */}
+                                    </div>
+
+                                    <div className="border-top pt-3">
+                                        <h6 className="fw-semibold mb-3">Contact Information</h6>
+                                        <ul className="list-unstyled">
+                                            <li className="mb-2 d-flex align-items-center">
+                                                <i className="ti ti-mail me-2 text-primary"></i>
+                                                <small>{email || 'Not provided'}</small>
+                                            </li>
+                                            <li className="mb-2 d-flex align-items-center">
+                                                <i className="ti ti-phone me-2 text-primary"></i>
+                                                <small>{phone || 'Not provided'}</small>
+                                            </li>
+                                            <li className="d-flex align-items-center">
+                                                <i className="ti ti-gender-demiboy me-2 text-primary"></i>
+                                                <small>{gender || 'Not specified'}</small>
+                                            </li>
+                                        </ul>
+                                    </div>
                                 </div>
 
-                                <div className="flex-grow-1 w-100">
-                                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-start mb-3">
-                                        <div className="mb-2 mb-md-0">
-                                            <h4 className="card-title mb-1 fw-bold">{name}</h4>
-                                            <span className={`badge rounded-pill bg-opacity-10 text-${status === 'Active' ? 'success' : 'info'} bg-${status === 'Active' ? 'success' : 'info'}`}>
-                                                {status} • {lastActive}
-                                            </span>
-                                        </div>
-                                        <div className="dropdown">
-                                            <button className="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                                Actions
+                                {/* Main Content */}
+                                <div className="col-md-8 p-4">
+                                    <ul className="nav nav-pills gap-2 mb-4">
+                                        <li className="nav-item">
+                                            <button
+                                                className={`btn btn-sm ${activeTab === 'skills' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                onClick={() => setActiveTab('skills')}
+                                            >
+                                                Skills
                                             </button>
-                                            <ul className="dropdown-menu dropdown-menu-end">
-                                                <li><button className="dropdown-item">View Full Profile</button></li>
-                                                <li><button className="dropdown-item">Send Message</button></li>
-                                                <li><button className="dropdown-item">Shortlist</button></li>
-                                                <li><hr className="dropdown-divider" /></li>
-                                                <li><button className="dropdown-item text-danger">Reject Candidate</button></li>
-                                            </ul>
-                                        </div>
-                                    </div>
+                                        </li>
+                                        <li className="nav-item">
+                                            <button
+                                                className={`btn btn-sm ${activeTab === 'experience' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                onClick={() => setActiveTab('experience')}
+                                            >
+                                                Experience
+                                            </button>
+                                        </li>
+                                        <li className="nav-item">
+                                            <button
+                                                className={`btn btn-sm ${activeTab === 'education' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                onClick={() => setActiveTab('education')}
+                                            >
+                                                Education
+                                            </button>
+                                        </li>
+                                        <li className="nav-item">
+                                            <button
+                                                className={`btn btn-sm ${activeTab === 'job-description' ? 'btn-primary' : 'btn-outline-primary'}`}
+                                                onClick={() => setActiveTab('job-description')}
+                                            >
+                                                Job Description
+                                            </button>
+                                        </li>
+                                    </ul>
 
-                                    <p className="card-text text-muted mb-3 d-flex align-items-center">
-                                        <i className="ti ti-user me-2 flex-shrink-0"></i>
-                                        {tagline || 'No tagline available'}
-                                    </p>
+                                    {activeTab === 'skills' && (
+                                        <div>
+                                            <h6 className="fw-semibold mb-3">Technical Skills</h6>
+                                            <div className="d-flex flex-wrap gap-2 mb-4">
+                                                {skills?.length ? skills.map((skill, idx) => (
+                                                    <span key={idx} className="badge bg-primary bg-opacity-10 text-primary fw-normal py-2 px-3">
+                                                        {skill.skills}
+                                                    </span>
+                                                )) : (
+                                                    <span className="text-muted">No skills listed</span>
+                                                )}
+                                            </div>
 
-                                    <div className="row mb-3">
-                                        <div className="col-12 col-md-6 mb-2 mb-md-0">
-                                            <div className="d-flex align-items-center text-muted">
-                                                <i className="ti ti-mail me-2 flex-shrink-0"></i>
-                                                <small className="text-truncate">{email}</small>
+                                            <h6 className="fw-semibold mb-3">Languages</h6>
+                                            <div className="d-flex flex-wrap gap-2">
+                                                {languages?.length ? languages.map((lang, idx) => (
+                                                    <span key={idx} className="badge bg-secondary bg-opacity-10 text-secondary fw-normal py-2 px-3">
+                                                        {lang.languages}
+                                                    </span>
+                                                )) : (
+                                                    <span className="text-muted">No languages listed</span>
+                                                )}
                                             </div>
                                         </div>
-                                        <div className="col-12 col-md-6">
-                                            <div className="d-flex align-items-center text-muted">
-                                                <i className="ti ti-phone me-2 flex-shrink-0"></i>
-                                                <small>{phone}</small>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    )}
 
-                                    <div className="mb-4">
-                                        <h6 className="d-flex align-items-center mb-2">
-                                            <i className="ti ti-code me-2 text-primary"></i>
-                                            <span className="fw-bold">Technical Skills</span>
-                                        </h6>
-                                        <div className="d-flex flex-wrap gap-2">
-                                            {skills?.length ? skills.map((skill, idx) => (
-                                                <span key={idx} className="badge bg-primary bg-opacity-10 text-primary fw-normal py-2 px-3">
-                                                    {skill}
-                                                </span>
-                                            )) : (
-                                                <span className="text-muted">No skills listed</span>
+                                    {activeTab === 'experience' && (
+                                        <div>
+                                            {experience?.length > 0 ? (
+                                                <ul className="list-unstyled">
+                                                    {experience.map((job, idx) => (
+                                                        <li key={idx} className="mb-4 pb-3 border-bottom">
+                                                            <div className="d-flex justify-content-between">
+                                                                <div>
+                                                                    <h6 className="fw-semibold mb-1">{job.title}</h6>
+                                                                    <p className="mb-1">{job.company}</p>
+                                                                    <small className="text-muted d-block mb-1">
+                                                                        {job.startDate} - {job.endDate || 'Present'} • {job.duration}
+                                                                    </small>
+                                                                    <small className="text-muted">{job.location}</small>
+                                                                </div>
+                                                                {job.current && (
+                                                                    <span className="badge bg-success bg-opacity-10 text-success h-25">Current</span>
+                                                                )}
+                                                            </div>
+                                                            {job.description && (
+                                                                <p className="mt-2 text-muted small">{job.description}</p>
+                                                            )}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            ) : (
+                                                <div className="text-center py-4">
+                                                    <i className="ti ti-briefcase-off fs-1 text-muted mb-3"></i>
+                                                    <p className="text-muted">No work experience added yet</p>
+                                                </div>
                                             )}
                                         </div>
-                                    </div>
+                                    )}
 
-                                    <div>
-                                        <h6 className="d-flex align-items-center mb-2">
-                                            <i className="ti ti-briefcase me-2 text-primary"></i>
-                                            <span className="fw-bold">Work Experience</span>
-                                        </h6>
-                                        {jobs?.length > 0 ? (
-                                            <ul className="list-unstyled mb-0">
-                                                {jobs.map((job, idx) => (
-                                                    <li key={idx} className="mb-2">
-                                                        <div className="d-flex flex-column flex-md-row justify-content-between">
-                                                            <span className="fw-medium">{job.title} • {job.company}</span>
-                                                            <small className="text-muted">{job.duration}</small>
-                                                        </div>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        ) : (
-                                            <div className="d-flex align-items-center text-muted">
-                                                <i className="ti ti-mood-sad me-2"></i>
-                                                <span>No work experience added yet</span>
+                                    {activeTab === 'education' && (
+                                        <div>
+                                            {education?.length > 0 ? (
+                                                <ul className="list-unstyled">
+                                                    {education.map((edu, idx) => (
+                                                        <li key={idx} className="mb-4 pb-3 border-bottom">
+                                                            <h6 className="fw-semibold mb-1">{edu.degree}</h6>
+                                                            <p className="mb-1">{edu.institution}</p>
+                                                            <small className="text-muted d-block mb-1">
+                                                                {edu.startYear} - {edu.endYear || 'Present'}
+                                                            </small>
+                                                            {edu.fieldOfStudy && (
+                                                                <small className="text-muted">Field: {edu.fieldOfStudy}</small>
+                                                            )}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            ) : (
+                                                <div className="text-center py-4">
+                                                    <i className="ti ti-school fs-1 text-muted mb-3"></i>
+                                                    <p className="text-muted">No education information added yet</p>
+                                                </div>
+                                            )}
+
+                                            {certifications?.length > 0 && (
+                                                <>
+                                                    <h6 className="fw-semibold mb-3 mt-4">Certifications</h6>
+                                                    <ul className="list-unstyled">
+                                                        {certifications.map((cert, idx) => (
+                                                            <li key={idx} className="mb-3">
+                                                                <h6 className="fw-semibold mb-1">{cert.certificates}</h6>
+                                                                <p className="mb-1 small">{cert.issuer}</p>
+                                                                <p className="mb-1 small">{cert.year}</p>
+                                                                <small className="text-muted">{cert.issueDate} - {cert.expirationDate || 'No expiration'}</small>
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {activeTab === "job-description" && candidate?.jobDetails && (
+                                        <div className="p-4 bg-light rounded">
+                                            <h4 className="fw-bold mb-3">Job Information</h4>
+                                            <div className="row g-3">
+                                                <div className="col-md-6">
+                                                    <strong>Title:</strong> {candidate.jobDetails.title || 'N/A'}
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <strong>Company:</strong> {candidate.jobDetails.company || 'N/A'}
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <strong>Location:</strong> {candidate.jobDetails.location || 'N/A'}
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <strong>Salary:</strong> {candidate.jobDetails.salary || 'N/A'}
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <strong>Type:</strong> {candidate.jobDetails.type || 'N/A'}
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <strong>Experience:</strong> {candidate.jobDetails.experience || 'N/A'}
+                                                </div>
                                             </div>
-                                        )}
-                                    </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
+                        </div>
 
-                            <div className="card-footer bg-transparent border-top-0 d-flex flex-column flex-md-row justify-content-between align-items-center p-3 gap-2">
-                                <button className="btn btn-sm btn-outline-primary w-100 w-md-auto">
+                        <div className="modal-footer bg-light d-flex flex-column flex-md-row justify-content-between align-items-center p-4 border-top">
+                            <button
+                                className="btn btn-sm btn-outline-secondary mb-2 mb-md-0"
+                                onClick={onClose}
+                            >
+                                Close
+                            </button>
+                            <div className="d-flex gap-2">
+                                <button
+                                    className="btn btn-sm btn-primary"
+                                    onClick={handleViewFullProfile}
+                                >
+                                    <i className="ti ti-user me-2"></i>
                                     View Full Profile
                                 </button>
-                                <button className="btn btn-sm btn-outline-primary w-100 w-md-auto">
-                                    Send Message
+                                <button className="btn btn-sm btn-success" onClick={() => rejectShortlist("Shortlisted", candidateId, applicationId)}>
+                                    <i className="ti ti-check me-2"></i>
+                                    Shortlist
                                 </button>
-                                <div className="d-flex gap-2 w-100 w-md-auto">
-                                    <button className="btn btn-sm btn-success flex-grow-1">Shortlist</button>
-                                    <button className="btn btn-sm btn-danger flex-grow-1">Reject</button>
-                                </div>
+                                <button className="btn btn-sm btn-outline-danger" onClick={() => rejectShortlist("Rejected", candidateId, applicationId)}>
+                                    <i className="ti ti-x me-2"></i>
+                                    Reject
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -171,31 +282,86 @@ const CandidateCard = ({ isOpen, candidate, onClose }) => {
 };
 
 
-const CompanyCandidate = ({ isLoading = false }) => {
+const CompanyCandidate = () => {
     const [isCandidateApplicationOpen, setIsCandidateApplicationOpen] = useState(false)
     const [selectedCandidate, setSelectedCandidate] = useState(null);
+    const [candidateId, setCandidateId] = useState(null);
+    const [applicationId, setApplicationId] = useState(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    const { getAllApplicantsOnAllJob, isLoading, allAppliedCandidates } = useCompanyContext()
 
-    const handleViewCandidate = (candidate) => {
+    useEffect(() => {
+        getAllApplicantsOnAllJob()
+    }, [])
+
+    const handleViewCandidate = (candidate, applicationId) => {
         setIsCandidateApplicationOpen(true);
         setSelectedCandidate(candidate);
+        setCandidateId(candidate?.candidateProfile?.userId);
+        setApplicationId(applicationId)
     };
 
     const handleModalClose = () => {
         setIsCandidateApplicationOpen(false);
         setSelectedCandidate(null);
+        setCandidateId(null)
+        setApplicationId(null)
     };
+
+    const [statusFilter, setStatusFilter] = useState('All');
+    const [locationFilter, setLocationFilter] = useState('All');
+    const [experienceFilter, setExperienceFilter] = useState('All');
+
+    const filteredCandidates = allAppliedCandidates.filter(candidate => {
+        const matchesSearch =
+            candidate?.jobDetails?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            candidate?.jobDetails?.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            candidate?.jobDetails?.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            candidate?.jobDetails?.type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            candidate?.jobDetails?.experience?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            candidate?.candidateProfile?.fullname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            candidate?.candidateProfile?.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            candidate?.candidateProfile?.phone?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            candidate?.candidateProfile?.headline?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            candidate?.candidateProfile?.summary?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            candidate?.candidateProfile?.skills?.some(skillObj =>
+                skillObj.skills?.toLowerCase().includes(searchTerm.toLowerCase())
+            ) ||
+            candidate?.candidateProfile?.languages?.some(langObj =>
+                langObj.languages?.toLowerCase().includes(searchTerm.toLowerCase())
+            ) ||
+            candidate?.candidateProfile?.certifications?.some(certObj =>
+                certObj.certificates?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                certObj.issuer?.toLowerCase().includes(searchTerm.toLowerCase())
+            ) ||
+            candidate?.candidateProfile?.projects?.some(projectObj =>
+                projectObj.projects?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                projectObj.description?.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+        const matchesStatus = statusFilter === 'All' || candidate.status === statusFilter;
+        const matchesLocation = locationFilter === 'All' || candidate?.candidateProfile?.location === locationFilter;
+        const matchesExperience = experienceFilter === 'All' || candidate?.jobDetails?.experience === experienceFilter;
+
+        return matchesSearch && matchesStatus && matchesLocation && matchesExperience;
+    });
 
     const [currentPage, setCurrentPage] = useState(1);
     const candidateListPerPage = 10;
 
-
     // Pagination logic
     const indexOfLastCandidateList = currentPage * candidateListPerPage;
     const indexOfFirstCandidateList = indexOfLastCandidateList - candidateListPerPage;
-    const currentCandidateList = candidateList.slice(indexOfFirstCandidateList, indexOfLastCandidateList);
-    const totalPages = Math.ceil(candidateList.length / candidateListPerPage);
-
+    const currentCandidateList = filteredCandidates.slice(indexOfFirstCandidateList, indexOfLastCandidateList);
+    const totalPages = Math.ceil(filteredCandidates.length / candidateListPerPage);
+    
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
+    const uniqueStatuses = ['All', ...new Set(allAppliedCandidates.map(c => c.status).filter(Boolean))];
+    const uniqueLocations = ['All', ...new Set(allAppliedCandidates.map(c => c?.candidateProfile?.location).filter(Boolean))];
+    const uniqueExperiences = ['All', ...new Set(allAppliedCandidates.map(c => c?.jobDetails?.experience).filter(Boolean))];
+
+
 
     return (
         <>
@@ -207,20 +373,51 @@ const CompanyCandidate = ({ isLoading = false }) => {
                             <h2 className="fw-bold mb-1">Candidate Profiles</h2>
                             <p className="text-muted mb-0">Find and manage your candidates</p>
                         </div>
-                        <div className="d-flex flex-column flex-md-row gap-3 w-100 w-md-auto">
+
+                        <div className="d-flex flex-column flex-md-row gap-3 w-100 w-md-auto flex-wrap">
+                            {/* Search Input */}
                             <div className="position-relative flex-grow-1">
                                 <input
                                     type="text"
                                     className="form-control form-control-sm ps-5"
                                     placeholder="Search candidates..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                                 <i className="ti ti-search position-absolute start-0 top-50 translate-middle-y ms-3 text-muted"></i>
                             </div>
-                            <select className="form-select form-select-sm w-auto">
-                                <option>All Statuses</option>
-                                <option>Active</option>
-                                <option>New</option>
-                                <option>Interviewing</option>
+
+                            {/* Status Filter */}
+                            <select
+                                className="form-select form-select-sm w-auto"
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                            >
+                                {uniqueStatuses.map((status, index) => (
+                                    <option key={index} value={status}>{status}</option>
+                                ))}
+                            </select>
+
+                            {/* Location Filter */}
+                            <select
+                                className="form-select form-select-sm w-auto"
+                                value={locationFilter}
+                                onChange={(e) => setLocationFilter(e.target.value)}
+                            >
+                                {uniqueLocations.map((location, index) => (
+                                    <option key={index} value={location}>{location}</option>
+                                ))}
+                            </select>
+
+                            {/* Experience Filter */}
+                            <select
+                                className="form-select form-select-sm w-auto"
+                                value={experienceFilter}
+                                onChange={(e) => setExperienceFilter(e.target.value)}
+                            >
+                                {uniqueExperiences.map((exp, index) => (
+                                    <option key={index} value={exp}>{exp}</option>
+                                ))}
                             </select>
                         </div>
                     </div>
@@ -234,7 +431,7 @@ const CompanyCandidate = ({ isLoading = false }) => {
                                         <tr>
                                             <th className="d-none d-sm-table-cell">Applied For</th>
                                             <th>Name</th>
-                                            <th className="d-none d-md-table-cell">Email</th>
+                                            <th className="d-none d-md-table-cell">Location</th>
                                             <th className="d-none d-lg-table-cell">Phone</th>
                                             <th>Resume</th>
                                             <th>Actions</th>
@@ -253,19 +450,19 @@ const CompanyCandidate = ({ isLoading = false }) => {
                                         ) : currentCandidateList.length === 0 ? (
                                             <tr>
                                                 <td colSpan="6" className="text-center py-4 text-muted">
-                                                    No candidates found. Add your first candidate.
+                                                    No candidates found.
                                                 </td>
                                             </tr>
                                         ) : (
                                             currentCandidateList.map((candidate) => (
-                                                <tr key={candidate.id}>
-                                                    <td className="d-none d-sm-table-cell">{candidate.appliedFor || <span className="text-muted">N/A</span>}</td>
-                                                    <td>{candidate.name}</td>
-                                                    <td className="d-none d-md-table-cell">{candidate.email}</td>
-                                                    <td className="d-none d-lg-table-cell">{candidate.phone}</td>
+                                                <tr key={candidate?.applicationId}>
+                                                    <td className="d-none d-sm-table-cell">{candidate?.jobDetails?.title || <span className="text-muted">N/A</span>}</td>
+                                                    <td>{candidate.candidateProfile?.fullname}</td>
+                                                    <td className="d-none d-md-table-cell">{candidate?.candidateProfile?.location}</td>
+                                                    <td className="d-none d-lg-table-cell">{candidate?.candidateProfile?.phone}</td>
                                                     <td>
-                                                        {candidate.resumeUrl ? (
-                                                            <a href={candidate.resumeUrl} target="_blank" rel="noopener noreferrer" className="text-nowrap">
+                                                        {candidate?.candidateProfile?.resume ? (
+                                                            <a href={candidate?.candidateProfile?.resume} target="_blank" rel="noopener noreferrer" className="text-nowrap">
                                                                 View Resume
                                                             </a>
                                                         ) : (
@@ -273,7 +470,7 @@ const CompanyCandidate = ({ isLoading = false }) => {
                                                         )}
                                                     </td>
                                                     <td>
-                                                        <button className="btn btn-sm btn-outline-primary" onClick={() => handleViewCandidate(candidate)}>
+                                                        <button className="btn btn-sm btn-outline-primary" onClick={() => handleViewCandidate(candidate, candidate.applicationJobId)}>
                                                             View
                                                         </button>
                                                     </td>
@@ -287,16 +484,15 @@ const CompanyCandidate = ({ isLoading = false }) => {
                     </div>
 
                     {/* Expanded View */}
-
                     {isCandidateApplicationOpen && selectedCandidate && (
                         <CandidateCard
                             isOpen={isCandidateApplicationOpen}
                             candidate={selectedCandidate}
                             onClose={handleModalClose}
+                            candidateId={candidateId}
+                            applicationId={applicationId}
                         />
                     )}
-
-
 
                     {/* Pagination */}
                     <nav aria-label="Page navigation" className="mt-4">
