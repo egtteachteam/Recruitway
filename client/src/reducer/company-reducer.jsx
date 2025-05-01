@@ -28,6 +28,14 @@ const companyReducer = (state, action) => {
                 allAppliedCandidates: action.payload.applicants
             }
 
+        case "SET_NOTIFICATION":
+            return {
+                ...state,
+                isLoading: false,
+                notifications: action.payload.notifications,
+                unreadCount: action.payload.unreadCount
+            }
+
         default:
             return state
     }

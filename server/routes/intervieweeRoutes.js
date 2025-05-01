@@ -11,7 +11,10 @@ const updateLastActive = require('../middleware/update-lastActive-middleware');
 intervieweeRouter.post('/createprofile', authMiddleware, roleCheck(['user']), upload.fields([{ name: 'profilePicture', maxCount: 1 }, { name: 'resume', maxCount: 1 }]), updateLastActive, createProfile);
 intervieweeRouter.get('/getprofile', authMiddleware, roleCheck(['user']), getProfile);
 intervieweeRouter.get('/getAllJobs', authMiddleware, roleCheck(['user']), updateLastActive, getAllJobs);
-intervieweeRouter.post("/apply-job", authMiddleware, roleCheck(['user']), updateLastActive, applyForJob);
+
+// intervieweeRouter.post("/apply-job", authMiddleware, roleCheck(['user']), updateLastActive, applyForJob);
+intervieweeRouter.post('/apply-job', authMiddleware, roleCheck(['user']), updateLastActive, applyForJob);
+
 intervieweeRouter.get("/applied-jobs/:userId", authMiddleware, roleCheck(['user']), updateLastActive, getAppliedJobs);
 intervieweeRouter.delete('/withdraw-job/:jobId', authMiddleware, roleCheck(['user']), updateLastActive, withdrawFromJob);
 

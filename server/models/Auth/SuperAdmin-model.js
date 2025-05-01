@@ -25,6 +25,10 @@ const superAdminSchema = new Schema({
         type: String,
         trim: true
     },
+    address: {
+        type: String,
+        trim: true
+    },
     // permissions: {
     //     manageUsers: { type: Boolean, default: true },
     //     manageCompanies: { type: Boolean, default: true },

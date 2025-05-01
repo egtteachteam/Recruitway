@@ -1,14 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuthContext } from '../../../context/auth-context';
 import { Link, useNavigate } from 'react-router-dom';
-
-const notifications = [
-    { id: 1, img: '/images/profile/user-1.jpg', name: 'Roman Joined', message: '1 min ago' },
-    { id: 2, img: '/images/profile/user-2.jpg', name: 'New message received', message: '5 min ago' },
-    { id: 3, img: '/images/profile/user-3.jpg', name: 'New payment received', message: '23 min ago' },
-    { id: 4, img: '/images/profile/user-4.jpg', name: 'Jolly completed tasks', message: '1 hour ago' },
-    { id: 5, img: '/images/profile/user-5.jpg', name: 'Roman Joined', message: '1 day ago' },
-];
+import { useCompanyContext } from '../../../context/company-context';
+import formatDateToRelative from '../../../Helper/dateFormatter';
 
 const CompanyNavbar = () => {
 
@@ -59,7 +53,7 @@ const CompanyNavbar = () => {
                         </a>
 
                         <ul className="navbar-nav flex-row ms-auto align-items-center justify-content-center">
-                            <NotificationsDropdown notifications={notifications} />
+                            <NotificationsDropdown />
                             <ProfileDropdown user={user} logout={logout} />
                         </ul>
                     </div>
@@ -103,14 +97,23 @@ const CompanyNavbar = () => {
     );
 };
 
-const NotificationsDropdown = ({ notifications }) => {
+const NotificationsDropdown = () => {
     const [showDropdown, setShowDropdown] = useState(false);
     const dropdownRef = useRef(null);
     const buttonRef = useRef(null);
+    const navigate = useNavigate();
 
-    const handleClick = (e) => {
+    const { notifications, unreadCount } = useCompanyContext();
+
+    const handleToggleDropdown = (e) => {
         e.preventDefault();
-        setShowDropdown(!showDropdown);
+        const newState = !showDropdown;
+        setShowDropdown(newState);
+    };
+
+    const handleViewAll = () => {
+        navigate('/company/notifications');
+        setShowDropdown(false);
     };
 
     // Close dropdown when clicking outside
@@ -129,63 +132,98 @@ const NotificationsDropdown = ({ notifications }) => {
     }, []);
 
     return (
-        <li className="nav-item dropdown position-relative" ref={dropdownRef}>
-            <a
+        <li className="nav-item dropdown" ref={dropdownRef}>
+            <button
                 ref={buttonRef}
-                className="nav-link nav-icon-hover"
-                href="#"
-                onClick={handleClick}
+                className="nav-link nav-icon-hover position-relative p-0 bg-transparent border-0"
+                onClick={handleToggleDropdown}
                 aria-expanded={showDropdown}
+                aria-label="Notifications"
             >
                 <i className="ti ti-bell-ringing"></i>
-                <div className="notification bg-primary rounded-circle"></div>
-            </a>
+                {unreadCount > 0 && (
+                    <span className="position-absolute start-100 translate-middle badge bg-danger p-1">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                        <span className="visually-hidden">unread notifications</span>
+                    </span>
+                )}
+            </button>
 
-            {showDropdown && (
-                <div className="dropdown-menu content-dd dropdown-menu-end dropdown-menu-animate-up show bg-light-primary"
-                    style={{
-                        position: 'absolute',
-                        right: 0,
-                        top: '100%',
-                        zIndex: 1000,
-                        minWidth: '350px'
-                    }}
-                >
-                    <div className="d-flex align-items-center justify-content-between py-3 px-7">
-                        <h5 className="mb-0 fs-5 fw-semibold">Notifications</h5>
-                        <span className="badge bg-primary rounded-4 px-3 py-1 lh-sm">5 new</span>
-                    </div>
-                    <div className="message-body" data-simplebar style={{ maxHeight: '400px' }}>
-                        {notifications.map((item) => (
-                            <a
-                                href="#"
-                                className="py-6 px-7 d-flex align-items-center dropdown-item"
-                                key={item.id}
-                                onClick={(e) => e.preventDefault()}
-                            >
-                                <span className="me-3">
-                                    <img
-                                        src={item.img}
-                                        alt="user"
-                                        className="rounded-circle"
-                                        width="48"
-                                        height="48"
-                                    />
-                                </span>
-                                <div className="w-75 d-inline-block v-middle">
-                                    <h6 className="mb-1 fw-semibold">{item.name}</h6>
-                                    <span className="d-block">{item.message}</span>
-                                </div>
-                            </a>
-                        ))}
-                    </div>
-                    <div className="py-6 px-7 mb-1">
-                        <button className="btn btn-outline-primary w-100">
-                            See All Notifications
-                        </button>
-                    </div>
+            <div
+                className={`dropdown-menu dropdown-menu-end dropdown-menu-animate-up p-0 ${showDropdown ? 'show' : ''}`}
+                style={{
+                    position: 'absolute',
+                    right: 0,
+                    top: '100%',
+                    zIndex: 1000,
+                    minWidth: '350px'
+                }}
+            >
+                <div className="d-flex align-items-center justify-content-between p-3 border-bottom">
+                    <h5 className="mb-0 fw-semibold">Notifications</h5>
+                    {unreadCount > 0 && (
+                        <span className="badge bg-primary rounded-pill">{unreadCount} new</span>
+                    )}
                 </div>
-            )}
+
+                <div className="notification-list" style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                    {notifications.length > 0 ? (
+                        <>
+                            {notifications.map((item) => (
+                                <div
+                                    key={item._id}
+                                    role="button"
+                                    tabIndex={0}
+                                    className={`dropdown-item p-3 d-flex align-items-start gap-3 ${!item.read ? 'bg-light-primary' : ''}`}
+                                >
+                                    <div className={`flex-shrink-0 rounded-circle p-2 ${item.read ? 'bg-light' : 'bg-primary bg-opacity-10'}`}>
+                                        {item.metadata?.applicantPhoto ? (
+                                            <img
+                                                src={item.metadata.applicantPhoto}
+                                                alt={item.metadata.applicantName}
+                                                className="rounded-circle"
+                                                style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                            />
+                                        ) : (
+                                            <i className={`ti ti-${item.icon || 'bell'} fs-5 ${item.read ? 'text-muted' : 'text-primary'}`}></i>
+                                        )}
+                                    </div>
+                                    <div className="flex-grow-1">
+                                        <div className="d-flex justify-content-between align-items-start mb-1 gap-2">
+                                            <h6 className={`mb-0 fw-semibold ${item.read ? 'text-muted' : 'text-dark'} text-truncate`}>
+                                                {item.metadata.jobTitle}
+                                            </h6>
+                                            <small className="text-muted text-nowrap">
+                                                {formatDateToRelative(item.timestamp)}
+                                            </small>
+                                        </div>
+                                        <p className={`mb-0 ${item.read ? 'text-muted' : ''} text-wrap`}>
+                                            {item.message}
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </>
+                    ) : (
+                        <div className="text-center py-5 px-4">
+                            <div className="bg-light rounded-circle p-4 d-inline-flex mb-3">
+                                <i className="ti ti-bell-off fs-4 text-muted"></i>
+                            </div>
+                            <h6 className="text-muted mb-1">No notifications</h6>
+                            <p className="small text-muted mb-0">You're all caught up</p>
+                        </div>
+                    )}
+                </div>
+
+                <div className="p-3 border-top">
+                    <button
+                        className="btn btn-outline-secondary w-100"
+                        onClick={handleViewAll}
+                    >
+                        View All Notifications
+                    </button>
+                </div>
+            </div>
         </li>
     );
 };
@@ -195,6 +233,9 @@ const ProfileDropdown = ({ user, logout }) => {
     const dropdownRef = useRef(null);
     const buttonRef = useRef(null);
     const navigate = useNavigate()
+
+    console.log(user);
+
 
     const handleClick = (e) => {
         e.preventDefault();
@@ -227,8 +268,8 @@ const ProfileDropdown = ({ user, logout }) => {
                 <div className="d-flex align-items-center">
                     <div className="user-profile-img">
                         <img
-                            src="/images/profile/user-1.jpg"
-                            className="rounded-circle"
+                            src={user?.profilePicture ? user?.profilePicture : "/images/profile/user-1.jpg"}
+                            className="rounded-circle object-fit-cover"
                             width="35"
                             height="35"
                             alt="Profile"
@@ -253,8 +294,8 @@ const ProfileDropdown = ({ user, logout }) => {
                         </div>
                         <div className="d-flex align-items-center py-9 mx-7 border-bottom">
                             <img
-                                src="/images/profile/user-1.jpg"
-                                className="rounded-circle"
+                                src={user?.profilePicture ? user?.profilePicture : "/images/profile/user-1.jpg"}
+                                className="rounded-circle object-fit-cover"
                                 width="80"
                                 height="80"
                                 alt="Profile"

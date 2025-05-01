@@ -227,8 +227,8 @@ const ProfileDropdown = ({ user, logout }) => {
                 <div className="d-flex align-items-center">
                     <div className="user-profile-img">
                         <img
-                            src="/images/profile/user-1.jpg"
-                            className="rounded-circle"
+                            src={user?.profilePicture ? user?.profilePicture : "/images/profile/user-1.jpg"}
+                            className="rounded-circle object-fit-cover"
                             width="35"
                             height="35"
                             alt="Profile"
@@ -253,8 +253,8 @@ const ProfileDropdown = ({ user, logout }) => {
                         </div>
                         <div className="d-flex align-items-center py-9 mx-7 border-bottom">
                             <img
-                                src="/images/profile/user-1.jpg"
-                                className="rounded-circle"
+                                src={user?.profilePicture ? user?.profilePicture : "/images/profile/user-1.jpg"}
+                                className="rounded-circle object-fit-cover"
                                 width="80"
                                 height="80"
                                 alt="Profile"

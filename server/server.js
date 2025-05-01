@@ -13,7 +13,7 @@ const authRoutes = require('./routes/authRoutes');
 const companyRouter = require('./routes/companyRoutes');
 const intervieweeRouter = require('./routes/intervieweeRoutes');
 const interviewerRoutes = require('./routes/interviewerRoutes');
-const superadminRoutes = require('./routes/superadminRoutes');
+const superAdmminRouter = require('./routes/superadminRoutes');
 const interviewRoutes = require('./routes/interviewRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 
@@ -40,7 +40,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/company', companyRouter);
 app.use('/api/v1/candidate', intervieweeRouter);
 app.use('/api/v1/interviewer', interviewerRoutes);
-app.use('/api/v1/superadmin', superadminRoutes);
+app.use('/api/v1/superadmin', superAdmminRouter);
 app.use('/api/v1/interviews', interviewRoutes);
 app.use('/api/v1/chat', chatRoutes);
 

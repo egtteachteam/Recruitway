@@ -2,8 +2,9 @@ const CandidateProfile = require('../models/Auth/Candidate-model');
 const Interview = require('../models/Interview');
 const cloudinary = require("../config/cloudinary");
 const Job = require('../models/Job');
-const ApplyJob = require('../models/ApplyJob');
 const Auth = require('../models/Auth/Auth-model');
+const Notification = require('../models/Notification-modal');
+const JobApplication = require('../models/JobApplication-model');
 
 const getProfile = async (req, res) => {
     try {
@@ -91,7 +92,7 @@ const createProfile = async (req, res) => {
             ...(resumeUrl && { resume: resumeUrl })
         };
 
-        
+
 
         // Find existing profile or create new one
         let profile = await CandidateProfile.findOneAndUpdate(
@@ -139,7 +140,6 @@ const createProfile = async (req, res) => {
     }
 };
 
-// Get all active jobs
 const getAllJobs = async (req, res) => {
     try {
         const allJobs = await Job.find({ status: "Active" }).sort({ posted: -1 })
@@ -155,35 +155,93 @@ const getAllJobs = async (req, res) => {
     }
 };
 
-// Apply for a job
 const applyForJob = async (req, res) => {
-    const { jobId } = req.body;
-    const userId = req.user._id?.toString();
+    const { jobId, companyId } = req.body;
+    const applicantId = req.user._id;
 
-    if (!userId || !jobId) {
+    if (!applicantId || !jobId) {
         return res.status(400).json({ success: false, message: 'UserId and JobId are required.' });
     }
 
+    if (!jobId || !companyId) {
+        return res.status(400).json({
+            success: false,
+            message: 'Job ID and Company ID are required'
+        });
+    }
+
+    // Check if job exists
+    const job = await Job.findById(jobId);
+    if (!job) {
+        return res.status(404).json({
+            success: false,
+            message: 'Job not found'
+        });
+    }
+
     try {
-        let appliedJob = await ApplyJob.findOne({ userId });
+        // Check if the applicant has already applied to this job
+        let appliedJob = await JobApplication.findOne({
+            applicantId
+        });
 
         if (!appliedJob) {
-            // First time applying, create a new document
-            appliedJob = new ApplyJob({
-                userId,
-                items: [{ jobId, status: "Applied" }]
+            // Create new application entry if none exists
+            appliedJob = new JobApplication({
+                applicantId,
+                items: [{ jobId, companyId, status: "Applied" }]
             });
         } else {
-            const jobAlreadyApplied = appliedJob.items.some(item => item.jobId.toString() === jobId);
+            // Ensure the same job isn't applied to again
+            const jobAlreadyApplied = appliedJob.items.some(item => item.jobId.toString() === jobId.toString());
 
             if (jobAlreadyApplied) {
-                return res.status(400).json({ success: false, message: "You have already applied for this job." });
+                return res.status(400).json({
+                    success: false,
+                    message: "You have already applied for this job."
+                });
             }
 
-            appliedJob.items.push({ jobId, status: "Applied" });
+            // Add new job application to existing document
+            appliedJob.items.push({ jobId, companyId, status: "Applied" });
         }
 
         await appliedJob.save();
+
+        // Update the applicantCount field in the Job document
+        const updatedJob = await Job.findByIdAndUpdate(jobId, {
+            $inc: { applicants: 1 }
+        }, { new: true }); // Add { new: true } to return the updated document
+
+        if (!updatedJob) {
+            return res.status(404).json({
+                success: false,
+                message: "Error updating job applicant count"
+            });
+        }
+
+        // console.log(aaav);
+
+
+        // await Notification.create({
+        //     companyId,
+        //     applicantId,
+        //     title: 'New Job Application',
+        //     message: `${req.user.fullname} has applied for ${job.title} position`,
+        //     type: 'application',
+        //     priority: 'high',
+        //     actionRequired: true,
+        //     actionUrl: `/dashboard/jobs/applications/${application._id}`,
+        //     actionLabel: 'Review Application',
+        //     metadata: {
+        //         jobId,
+        //         applicationId: application._id,
+        //         applicantId,
+        //         jobTitle: job.title,
+        //         applicantName: req.user.fullname,
+        //         applicantPhoto: req.user.profilePicture,
+        //     }
+        // });
 
         res.status(201).json({ success: true, message: "Job applied successfully." });
     } catch (error) {
@@ -192,7 +250,94 @@ const applyForJob = async (req, res) => {
     }
 };
 
-// Get all jobs a user has applied to
+
+// const applyForJob = async (req, res) => {
+//     const { jobId, companyId } = req.body;
+//     const applicantId = req.user._id;
+
+//     if (!applicantId || !jobId) {
+//         return res.status(400).json({ success: false, message: 'UserId and JobId are required.' });
+//     }
+
+//     if (!jobId || !companyId) {
+//         return res.status(400).json({
+//             success: false,
+//             message: 'Job ID and Company ID are required'
+//         });
+//     }
+
+//     // Check if job exists
+//     const job = await Job.findById(jobId);
+//     if (!job) {
+//         return res.status(404).json({
+//             success: false,
+//             message: 'Job not found'
+//         });
+//     }
+
+//     try {
+//         // Check if the applicant has already applied to this job
+//         let appliedJob = await JobApplication.findOne({
+//             applicantId,
+//             "items.jobId": jobId // Check if the jobId exists in the items array
+//         });
+
+//         if (!appliedJob) {
+//             // Create a new application entry if none exists
+//             appliedJob = new JobApplication({
+//                 applicantId,
+//                 items: [{ jobId, companyId, status: "Applied" }]
+//             });
+//         } else {
+//             // Ensure the same job isn't applied to again
+//             const jobAlreadyApplied = appliedJob.items.some(item => item.jobId.toString() === jobId.toString());
+
+//             if (jobAlreadyApplied) {
+//                 return res.status(400).json({
+//                     success: false,
+//                     message: "You have already applied for this job."
+//                 });
+//             }
+
+//             // Add new job application to existing document
+//             appliedJob.items.push({ jobId, companyId, status: "Applied" });
+//         }
+
+//         await appliedJob.save();
+
+//         // Increase applicant count for the job
+//         await Job.findByIdAndUpdate(jobId, {
+//             $inc: { applicantCount: 1 }
+//         });
+
+//         // Optional: Add a notification (you can uncomment the notification code if needed)
+//         // await Notification.create({
+//         //     companyId,
+//         //     applicantId,
+//         //     title: 'New Job Application',
+//         //     message: `${req.user.fullname} has applied for ${job.title} position`,
+//         //     type: 'application',
+//         //     priority: 'high',
+//         //     actionRequired: true,
+//         //     actionUrl: `/dashboard/jobs/applications/${appliedJob._id}`,
+//         //     actionLabel: 'Review Application',
+//         //     metadata: {
+//         //         jobId,
+//         //         applicationId: appliedJob._id,
+//         //         applicantId,
+//         //         jobTitle: job.title,
+//         //         applicantName: req.user.fullname,
+//         //         applicantPhoto: req.user.profilePicture,
+//         //     }
+//         // });
+
+//         res.status(201).json({ success: true, message: "Job applied successfully." });
+//     } catch (error) {
+//         console.error("Error applying for job:", error.message);
+//         res.status(500).json({ success: false, message: "Error applying for job", error: error.message });
+//     }
+// };
+
 const getAppliedJobs = async (req, res) => {
     const { userId } = req.params;
 
@@ -201,14 +346,14 @@ const getAppliedJobs = async (req, res) => {
             return res.status(400).json({ success: false, message: 'UserId is required' });
         }
 
-        const appliedJobs = await ApplyJob.findOne({ userId }).populate('items.jobId').lean();
+        const appliedJobs = await JobApplication.findOne({ applicantId: userId }).populate('items.jobId').lean();
 
         if (!appliedJobs || appliedJobs.items.length === 0) {
             return res.status(404).json({ success: false, message: 'No applied jobs found.' });
         }
 
         // Sort items by the job's 'posted' date in descending order
-        appliedJobs.items.sort((a, b) => new Date(b.jobId.posted) - new Date(a.jobId.posted));
+        appliedJobs.items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
         const jobsWithStatus = appliedJobs.items.map(item => ({
             appicationId: item._id,
@@ -220,8 +365,8 @@ const getAppliedJobs = async (req, res) => {
             experience: item.jobId.experience,
             type: item.jobId.type,
             status: item.status,
-            appliedAt: appliedJobs.createdAt,
-            statusDate: appliedJobs.updatedAt
+            appliedAt: item.createdAt,
+            statusDate: item.updatedAt
         }));
 
         res.status(200).json({ success: true, appliedJobs: jobsWithStatus });
@@ -231,14 +376,12 @@ const getAppliedJobs = async (req, res) => {
     }
 };
 
-// Withdraw from applied job (for applicants)
 const withdrawFromJob = async (req, res) => {
     try {
         const { jobId } = req.params;
-        const userId = req.user._id;  // User's ID
-
-        // Find the ApplyJob document for this user
-        const appliedJob = await ApplyJob.findOne({ userId });
+        const userId = req.user._id;
+        // Find the JobApplication document for this user
+        const appliedJob = await JobApplication.findOne({ applicantId: userId });
 
         if (!appliedJob) {
             return res.status(404).json({ message: "No application found for this user." });
@@ -263,6 +406,49 @@ const withdrawFromJob = async (req, res) => {
         res.status(500).json({ message: "Error withdrawing from job", error: error.message });
     }
 };
+
+async function getUserNotifications(req, res) {
+    const { companyId } = req.params;
+
+    try {
+        const notifications = await Notification.find({ companyId })
+            .sort({ createdAt: -1 })
+            .lean()
+            .exec();
+
+        // Transform notifications to match frontend requirements
+        const formattedNotifications = notifications.map(notification => ({
+            _id: notification._id,
+            id: notification._id.toString(), // For React key purposes
+            name: notification.title || 'Notification',
+            message: notification.body,
+            icon: notification.type === 'alert' ? 'alert-circle' :
+                notification.type === 'message' ? 'message' :
+                    notification.type === 'update' ? 'refresh' : 'bell',
+            timestamp: notification.createdAt,
+            read: notification.isRead || false,
+            action: notification.actionRequired ? 'View' : null,
+            // Additional fields that might be useful
+            type: notification.type || 'general',
+            priority: notification.priority || 'normal',
+            metadata: notification.metadata || {}
+        }));
+
+        res.json({
+            success: true,
+            notifications: formattedNotifications,
+            unreadCount: notifications.filter(n => !n.isRead).length,
+            lastUpdated: new Date()
+        });
+    } catch (error) {
+        console.error('Error fetching notifications:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch notifications',
+            error: error.message
+        });
+    }
+}
 
 const getDashboard = (req, res) => {
     res.render('interviewee/dashboard', { user: req.user });
@@ -296,6 +482,6 @@ const rejectInterview = async (req, res) => {
 };
 
 module.exports = {
-    getProfile, createProfile, getAllJobs, applyForJob, getAppliedJobs, withdrawFromJob,
+    getProfile, createProfile, getAllJobs, applyForJob, getUserNotifications, getAppliedJobs, withdrawFromJob,
     getDashboard, viewInterviews, acceptInterview, rejectInterview
 }

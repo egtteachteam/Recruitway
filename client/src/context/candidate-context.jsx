@@ -34,10 +34,10 @@ const CandidateProvider = ({ children }) => {
         }
     }
 
-    const appllyJobs = async (jobId) => {
+    const appllyJobs = async (jobId, companyId) => {
         try {
             const res = await axios.post(`${server}/api/v1/candidate/apply-job`,
-                { jobId },
+                { jobId, companyId },
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -56,6 +56,7 @@ const CandidateProvider = ({ children }) => {
             console.error(error);
             const message =
                 error?.response?.data?.message || "Failed to apply for job.";
+            toast.dismiss()
             toast.error(message);
         }
     };

@@ -21,13 +21,16 @@ const UserJobs = () => {
         getAllJobs()
     }, [])
 
+    console.log(jobs);
+
+
     const handleViewJob = (job) => {
         setSelectedJob(job);
     };
 
-    const handleApply = async (id) => {
+    const handleApply = async (jobId, companyId) => {
         try {
-            appllyJobs(id)
+            appllyJobs(jobId, companyId)
         } catch (error) {
             console.log(error.message);
 
@@ -224,7 +227,7 @@ const UserJobs = () => {
                                     </div>
                                     <button
                                         className="btn btn-sm btn-primary btn-lg px-4 py-2 d-flex align-items-center"
-                                        onClick={() => handleApply(selectedJob._id)}
+                                        onClick={() => handleApply(selectedJob._id, selectedJob.userId)}
                                     >
                                         Apply Now <i className="bi bi-send ms-2"></i>
                                     </button>

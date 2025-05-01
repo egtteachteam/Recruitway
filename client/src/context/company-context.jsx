@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer } from "react";
+import { createContext, useContext, useEffect, useReducer } from "react";
 import companyReducer from "../reducer/company-reducer";
 import axios from "axios";
 import { useAuthContext } from "./auth-context";
@@ -11,13 +11,17 @@ const initialState = {
     jobList: [],
     allAppliedCandidates: [],
     appiledCandidates: [],
-    reports: []
+    reports: [],
+    notifications: [],
+    unreadCount: 0
 }
 
 const CompanyProvider = ({ children }) => {
 
     const [state, dispatch] = useReducer(companyReducer, initialState)
-    const { server, token } = useAuthContext()
+    const { server } = useAuthContext()
+
+    const token = localStorage.getItem("token")
 
     const getAllJobs = async () => {
         dispatch({ type: "SET_LOADING" })
@@ -145,6 +149,46 @@ const CompanyProvider = ({ children }) => {
         }
     }
 
+    const getNotification = async () => {
+        dispatch({ type: "SET_LOADING" })
+        try {
+            const response = await axios.get(`${server}/api/v1/company/getCompanyNotification`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                }
+            )
+            const { notifications, unreadCount } = response.data
+            dispatch({ type: "SET_NOTIFICATION", payload: { notifications, unreadCount } })
+        } catch (error) {
+            toast.dismiss()
+            toast.error(error.response.data.message)
+        }
+    }
+
+    useEffect(() => {
+        getNotification()
+    }, [])
+
+    const markAsRead = async (id) => {
+        try {
+            const res = await axios.patch(`${server}/api/v1/company/markAsRead/${id}`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    },
+                }
+            )
+            getNotification()
+            toast.success(res.data.message);
+        } catch (error) {
+            toast.dismiss()
+            toast.error(error.response.data.message)
+        }
+    }
+
     return (
         <CompanyContext.Provider value={{
             ...state,
@@ -153,7 +197,9 @@ const CompanyProvider = ({ children }) => {
             handleJobEdit,
             handleConfirmDeleteJob,
             getAllApplicantsOnAllJob,
-            rejectShortlist
+            rejectShortlist,
+            getNotification,
+            markAsRead
         }}>
             {children}
         </CompanyContext.Provider>

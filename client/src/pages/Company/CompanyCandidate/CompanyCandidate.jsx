@@ -264,11 +264,11 @@ const CandidateCard = ({ isOpen, candidate, onClose, candidateId, applicationId 
                                     <i className="ti ti-user me-2"></i>
                                     View Full Profile
                                 </button>
-                                <button className="btn btn-sm btn-success" onClick={() => rejectShortlist("Shortlisted", candidateId, applicationId)}>
+                                <button className="btn btn-sm btn-success" onClick={() => { rejectShortlist("Shortlisted", candidateId, applicationId); onClose(); }}>
                                     <i className="ti ti-check me-2"></i>
                                     Shortlist
                                 </button>
-                                <button className="btn btn-sm btn-outline-danger" onClick={() => rejectShortlist("Rejected", candidateId, applicationId)}>
+                                <button className="btn btn-sm btn-outline-danger" onClick={() => { rejectShortlist("Rejected", candidateId, applicationId); onClose(); }}>
                                     <i className="ti ti-x me-2"></i>
                                     Reject
                                 </button>
@@ -290,9 +290,6 @@ const CompanyCandidate = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const { getAllApplicantsOnAllJob, isLoading, allAppliedCandidates } = useCompanyContext()
 
-    useEffect(() => {
-        getAllApplicantsOnAllJob()
-    }, [])
 
     const handleViewCandidate = (candidate, applicationId) => {
         setIsCandidateApplicationOpen(true);
@@ -307,6 +304,11 @@ const CompanyCandidate = () => {
         setCandidateId(null)
         setApplicationId(null)
     };
+
+
+    useEffect(() => {
+        getAllApplicantsOnAllJob()
+    }, [selectedCandidate])
 
     const [statusFilter, setStatusFilter] = useState('All');
     const [locationFilter, setLocationFilter] = useState('All');
@@ -354,7 +356,7 @@ const CompanyCandidate = () => {
     const indexOfFirstCandidateList = indexOfLastCandidateList - candidateListPerPage;
     const currentCandidateList = filteredCandidates.slice(indexOfFirstCandidateList, indexOfLastCandidateList);
     const totalPages = Math.ceil(filteredCandidates.length / candidateListPerPage);
-    
+
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     const uniqueStatuses = ['All', ...new Set(allAppliedCandidates.map(c => c.status).filter(Boolean))];
@@ -433,7 +435,8 @@ const CompanyCandidate = () => {
                                             <th>Name</th>
                                             <th className="d-none d-md-table-cell">Location</th>
                                             <th className="d-none d-lg-table-cell">Phone</th>
-                                            <th>Resume</th>
+                                            <th>Status</th>
+                                            <th className="d-none d-lg-table-cell">Resume</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
@@ -460,7 +463,8 @@ const CompanyCandidate = () => {
                                                     <td>{candidate.candidateProfile?.fullname}</td>
                                                     <td className="d-none d-md-table-cell">{candidate?.candidateProfile?.location}</td>
                                                     <td className="d-none d-lg-table-cell">{candidate?.candidateProfile?.phone}</td>
-                                                    <td>
+                                                    <td>{candidate?.status}</td>
+                                                    <td className="d-none d-lg-table-cell">
                                                         {candidate?.candidateProfile?.resume ? (
                                                             <a href={candidate?.candidateProfile?.resume} target="_blank" rel="noopener noreferrer" className="text-nowrap">
                                                                 View Resume

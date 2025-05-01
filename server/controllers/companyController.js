@@ -6,6 +6,8 @@ const Job = require('../models/Job');
 const ApplyJob = require('../models/ApplyJob');
 const CandidateProfile = require('../models/Auth/Candidate-model');
 const Auth = require('../models/Auth/Auth-model');
+const Notification = require('../models/Notification-modal');
+const JobApplication = require('../models/JobApplication-model');
 
 const getProfile = async (req, res) => {
     try {
@@ -258,8 +260,8 @@ const getAllJobApplicants = async (req, res) => {
         }, {});
 
         // Find all applications related to these jobs
-        const applications = await ApplyJob.find({ "items.jobId": { $in: jobIds } })
-            .populate('userId', '_id') // populate only _id of user to match with CandidateProfile
+        const applications = await JobApplication.find({ "items.jobId": { $in: jobIds } })
+            .populate('applicantId', '_id') // populate only _id of user to match with CandidateProfile
             .lean();
 
         if (!applications || applications.length === 0) {
@@ -267,7 +269,7 @@ const getAllJobApplicants = async (req, res) => {
         }
 
         // Collect userIds
-        const userIds = applications.map(app => app.userId._id.toString());
+        const userIds = applications.map(app => app.applicantId._id.toString());
 
         // Fetch candidate profiles
         const candidateProfiles = await CandidateProfile.find({ userId: { $in: userIds } }).lean();
@@ -278,7 +280,6 @@ const getAllJobApplicants = async (req, res) => {
             return acc;
         }, {});
 
-        // Final format
         const allApplicants = applications.flatMap(app =>
             app.items
                 .filter(item => jobIds.includes(item.jobId.toString()))
@@ -288,7 +289,7 @@ const getAllJobApplicants = async (req, res) => {
                     status: item.status,
                     appliedAt: app.createdAt,
                     jobDetails: jobMap[item.jobId.toString()] || null,
-                    candidateProfile: profileMap[app.userId._id.toString()] || null
+                    candidateProfile: profileMap[app.applicantId._id.toString()] || null
                 }))
         );
 
@@ -311,8 +312,8 @@ const getJobApplicants = async (req, res) => {
         }
 
         // Get applicants for the specific job
-        const applicants = await ApplyJob.find({ "items.jobId": jobId })
-            .populate('items.userId', 'name email')  // Populate user details (name, email) from Auth model
+        const applicants = await JobApplication.find({ "items.jobId": jobId })
+            .populate('items.applicantId', 'name email')  // Populate user details (name, email) from Auth model
             .lean();
 
         if (!applicants || applicants.length === 0) {
@@ -333,7 +334,7 @@ const updateApplicationStatus = async (req, res) => {
         const userId = req.user._id;
 
         // Find the application
-        const application = await ApplyJob.findOne({ userId: candidateId })
+        const application = await JobApplication.findOne({ applicantId: candidateId })
 
         if (!application) {
             return res.status(404).json({ message: "Application not found" });
@@ -359,14 +360,92 @@ const updateApplicationStatus = async (req, res) => {
         await application.save();
 
         res.status(200).json({
-            message: `Candidate Got ${status}`,
-            // message: "Application status updated successfully",
+            message: "Application status updated successfully",
         });
     } catch (error) {
-        console.error("Error updating application status:", error.message);
+        // console.error("Error updating application status:", error.message);
         res.status(500).json({ message: "Server error", error: error.message });
     }
 }
+
+async function getCompanyNotifications(req, res) {
+    const { page = 1, limit = 5 } = req.query;
+    const skip = (page - 1) * limit;
+    const companyId = req.user._id;
+
+    try {
+        const notifications = await Notification.find({ companyId })
+            .sort({ createdAt: -1 })
+            // .lean()
+            // .exec()
+            .skip(skip)
+            .limit(limit);
+
+        // Transform notifications to match frontend requirements
+        const formattedNotifications = notifications.map(notification => ({
+            _id: notification._id,
+            id: notification._id.toString(), // For React key purposes
+            name: notification.title || 'Notification',
+            message: notification.message,
+            icon: notification.type === 'alert' ? 'alert-circle' :
+                notification.type === 'message' ? 'message' :
+                    notification.type === 'update' ? 'refresh' : 'bell',
+            timestamp: notification.createdAt,
+            read: notification.isRead || false,
+            action: notification.actionRequired ? 'View' : null,
+            // Additional fields that might be useful
+            type: notification.type || 'general',
+            priority: notification.priority || 'normal',
+            metadata: notification.metadata || {}
+        }));
+
+        const total = await Notification.countDocuments({ companyId: companyId });
+        const totalPages = Math.ceil(total / limit)
+
+        res.json({
+            success: true,
+            notifications: formattedNotifications,
+            unreadCount: notifications.filter(n => !n.isRead).length,
+            lastUpdated: new Date()
+        });
+
+    } catch (error) {
+        console.error('Error fetching notifications:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch notifications',
+            error: error.message
+        });
+    }
+}
+
+const markAsRead = async (req, res) => {
+
+    const { companyId } = req.params;  // Extract companyId from the request params
+
+    try {
+        // Find all notifications for the given companyId
+        const allNotifications = await Notification.find({ companyId });
+
+        // Check if notifications exist
+        if (!allNotifications || allNotifications.length === 0) {
+            return res.status(404).json({ message: "No notifications found for this company" });
+        }
+
+        // Update notifications to mark them as read
+        await Notification.updateMany(
+            { companyId },  // filter by companyId
+            { $set: { isRead: true } }  // set the isRead field to true
+        );
+
+        // Optionally, return the updated notifications
+        res.status(200).json({ success: true, message: "All notifications marked as read.", notifications: allNotifications });
+
+    } catch (error) {
+        // console.error("Error marking notifications as read:", error.message);
+        res.status(500).json({ success: false, message: "Server error", error: error.message });
+    }
+};
 
 const getDashboard = async (req, res) => {
     try {
@@ -443,5 +522,6 @@ const getSuperAdmin = async (req, res) => {
 
 module.exports = {
     createProfile, getProfile, createJobPost, getAllJob, updateJobPost, deleteJobPost, getAllJobApplicants, getJobApplicants, updateApplicationStatus,
+    getCompanyNotifications, markAsRead,
     getDashboard, scheduleInterview, getInterviewees, getInterviewers, cancelInterview, getSuperAdmin
 }

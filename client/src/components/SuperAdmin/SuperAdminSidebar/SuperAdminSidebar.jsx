@@ -22,6 +22,18 @@ const SuperAdminSidebar = () => {
                             </Link>
                         </li>
                         <li className="sidebar-item">
+                            <Link className="sidebar-link" to="/superadmin/allCompanies" aria-expanded="false">
+                                <span><i className="ti ti-layout-dashboard"></i></span>
+                                <span className="hide-menu">All Companies</span>
+                            </Link>
+                        </li>
+                        <li className="sidebar-item">
+                            <Link className="sidebar-link" to="/superadmin/setting" aria-expanded="false">
+                                <span><i className="ti ti-settings"></i></span>
+                                <span className="hide-menu">Settings</span>
+                            </Link>
+                        </li>
+                        <li className="sidebar-item">
                             <Link className="sidebar-link" to="/superadmin/CandidateManagement" aria-expanded="false">
                                 <span><i className="ti ti-layout-dashboard"></i></span>
                                 <span className="hide-menu">Candidate Management</span>
