@@ -206,7 +206,7 @@ const updateJobPost = async (req, res) => {
 
         await jobDoc.save();
 
-        return res.status(200).json({ message: "Job post updated successfully", jobDoc });
+        return res.status(200).json({ message: "Job post updated successfully" });
     } catch (error) {
         console.error("Error updating job:", error);
         return res.status(500).json({ message: "Failed to update job post." });
@@ -228,7 +228,7 @@ const deleteJobPost = async (req, res) => {
         res.status(200).json({ message: "Job deleted successfully." });
     } catch (error) {
         console.error("Error deleting job post:", error);
-        res.status(500).json({ error: "Internal server error" });
+        res.status(500).json({ message: "Internal server error" });
     }
 };
 

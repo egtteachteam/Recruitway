@@ -64,15 +64,16 @@ const CompanyProvider = ({ children }) => {
 
     const handleJobEdit = async (id, data) => {
         try {
-            await axios.patch(`${server}/api/v1/company/update-job/${id}`,
+            const res = await axios.patch(`${server}/api/v1/company/update-job/${id}`,
                 data,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
-                    },
+                    }
                 }
             )
             await getAllJobs()
+            toast.success(res.data.message)
         } catch (error) {
             toast.dismiss()
             toast.error(error.response.data.message)

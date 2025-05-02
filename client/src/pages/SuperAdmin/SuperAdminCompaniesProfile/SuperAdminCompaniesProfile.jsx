@@ -1,54 +1,29 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import useTemporaryLoading from '../../../hooks/useTemporaryLoading';
+import { useSuperAdminContext } from '../../../context/superadmin-context';
 
 const SuperAdminCompaniesProfile = () => {
-    const { id } = useParams();
+    const location = useLocation();
+    const { companyProfile } = location.state;
     const navigate = useNavigate();
-    const [company, setCompany] = useState(null);
-    const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('about');
+    const { loading, triggerLoading } = useTemporaryLoading();
+    const { getAllJobOfSingleCompany, companyJobs: jobs } = useSuperAdminContext()
+
+    const company = companyProfile
 
     useEffect(() => {
-        // Simulate API fetch
-        const fetchCompany = async () => {
-            try {
-                // Mock data - in real app you would fetch by ID
-                const mockCompany = {
-                    id: 1,
-                    name: 'TechSphere Solutions',
-                    logo: 'https://via.placeholder.com/150/007bff/ffffff?text=TS',
-                    cover: 'https://via.placeholder.com/1200x400/007bff/ffffff?text=TechSphere',
-                    industry: 'Technology',
-                    location: 'San Francisco, CA',
-                    description: 'Innovative technology solutions for the digital age. We specialize in AI, cloud computing, and cybersecurity.',
-                    website: 'https://techsphere.example.com',
-                    employees: '500-1000',
-                    founded: 2015,
-                    rating: 4.8,
-                    reviews: 125,
-                    jobsCount: 24,
-                    about: 'TechSphere Solutions is a leading technology company dedicated to transforming businesses through innovative digital solutions. With a team of over 800 professionals across 3 continents, we help companies navigate the digital landscape.',
-                    culture: 'We foster a culture of innovation, collaboration, and continuous learning. Our employees enjoy flexible work arrangements, professional development opportunities, and a vibrant work environment.',
-                    benefits: ['Competitive salaries', 'Health insurance', '401(k) matching', 'Flexible PTO', 'Remote work options', 'Professional development budget'],
-                    photos: [
-                        'https://via.placeholder.com/400x300/007bff/ffffff?text=Office+1',
-                        'https://via.placeholder.com/400x300/007bff/ffffff?text=Team+2',
-                        'https://via.placeholder.com/400x300/007bff/ffffff?text=Event+3'
-                    ]
-                };
+        triggerLoading();
+    }, []);
 
-                setTimeout(() => {
-                    setCompany(mockCompany);
-                    setLoading(false);
-                }, 800);
-            } catch (err) {
-                console.error(err);
-                setLoading(false);
-            }
-        };
+    useEffect(() => {
+        getAllJobOfSingleCompany(company?.userId);
+    }, [company?.userId]);
 
-        fetchCompany();
-    }, [id]);
+    const handleViewJobs = (companyId) => {
+        navigate(`/superadmin/companiesJobs/${companyId}`);
+    };
 
     if (loading) {
         return (
@@ -98,104 +73,192 @@ const SuperAdminCompaniesProfile = () => {
             <div className="container-fluid">
                 <div className="container py-5">
                     <div className="bg-light min-vh-100">
-                        {/* Cover Photo */}
-                        <div
-                            className="bg-dark position-relative"
-                            style={{
-                                height: '400px',
-                                backgroundImage: `url(${company.cover})`,
-                                backgroundSize: 'cover',
-                                backgroundPosition: 'center'
-                            }}
-                        >
-                            <div className="position-absolute bottom-0 start-0 w-100 bg-dark bg-opacity-50 text-white py-4">
-                                <div className="container">
-                                    <div className="d-flex align-items-end">
+                        <div className="w-100 bg-dark text-white py-4">
+                            <div className="container">
+                                <div>
+                                    <button
+                                        className="btn btn-sm btn-outline-primary"
+                                        onClick={() => navigate(-1)}
+                                    >
+                                        <i className="bi bi-arrow-left me-2"></i>Back To Companies
+                                    </button>
+                                </div>
+                                <div className="d-flex flex-column flex-md-row align-items-center align-items-md-end gap-4 gap-md-5">
+                                    {/* Company Logo */}
+                                    <div className="position-relative">
                                         <img
-                                            src={company.logo}
-                                            alt={`${company.name} logo`}
-                                            className="rounded-circle border border-4 border-white shadow-lg me-4"
-                                            width="120"
-                                            height="120"
+                                            src={company.profilePicture || '/default-company.png'}
+                                            alt={`${company.fullname} logo`}
+                                            className="rounded-circle border border-4 border-white shadow-lg"
+                                            style={{
+                                                width: 'clamp(80px, 20vw, 120px)',
+                                                height: 'clamp(80px, 20vw, 120px)',
+                                                minWidth: '80px',
+                                                minHeight: '80px',
+                                                objectFit: 'cover'
+                                            }}
+                                            loading="lazy"
+                                            aria-hidden={!company.profilePicture}
                                         />
-                                        <div>
-                                            <h1 className="display-5 fw-bold mb-1">{company.name}</h1>
-                                            <div className="d-flex align-items-center gap-4 mb-3">
-                                                <span>
-                                                    <i className="bi bi-geo-alt-fill me-1"></i>
-                                                    {company.location}
-                                                </span>
-                                                <span>
-                                                    <i className="bi bi-building me-1"></i>
-                                                    {company.industry}
-                                                </span>
-                                                <span className="badge bg-success bg-opacity-25 text-success">
-                                                    <i className="bi bi-star-fill text-warning me-1"></i>
-                                                    {company.rating} ({company.reviews} reviews)
-                                                </span>
-                                            </div>
-                                            <div className="d-flex gap-3">
-                                                <button
-                                                    className="btn btn-primary rounded-pill px-4"
-                                                    onClick={() => navigate(`/companies/${company.id}/jobs`)}
-                                                >
-                                                    <i className="bi bi-briefcase-fill me-1"></i> View {company.jobsCount} Jobs
-                                                </button>
+                                        {!company.profilePicture && (
+                                            <span className="visually-hidden">Company logo placeholder</span>
+                                        )}
+                                    </div>
+
+                                    {/* Company Info */}
+                                    <div className="text-center text-md-start flex-grow-1">
+                                        {/* Company Name */}
+                                        <h1 className="display-5 text-white fw-bold mb-1">
+                                            {company.fullname}
+                                        </h1>
+
+                                        {/* Meta Information */}
+                                        <div className="d-flex justify-content-center justify-content-md-start align-items-center flex-wrap gap-2 gap-md-3 mb-3">
+                                            {/* Location */}
+                                            <span className="d-flex align-items-center text-white-80">
+                                                <i className="bi bi-geo-alt-fill me-1" aria-hidden="true"></i>
+                                                <span>{company.headquarters || 'Not specified'}</span>
+                                            </span>
+
+                                            {/* Industry */}
+                                            <span className="d-flex align-items-center text-white-80">
+                                                <i className="bi bi-building me-1" aria-hidden="true"></i>
+                                                <span>{company.industry || 'Not specified'}</span>
+                                            </span>
+
+                                            {/* Company Size */}
+                                            <span className="d-flex align-items-center text-white-80">
+                                                <i className="bi bi-people-fill me-1" aria-hidden="true"></i>
+                                                <span>{company.companySize || 'Not specified'}</span>
+                                            </span>
+
+                                            {/* Website Link */}
+                                            {company.website && (
                                                 <a
                                                     href={company.website}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="btn btn-outline-light rounded-pill px-4"
+                                                    className="text-white text-decoration-none d-flex align-items-center hover-opacity"
+                                                    aria-label="Company website"
                                                 >
-                                                    <i className="bi bi-globe me-1"></i> Website
+                                                    <i className="bi bi-globe me-1" aria-hidden="true"></i>
+                                                    <span className="d-none d-sm-inline">Website</span>
                                                 </a>
-                                            </div>
+                                            )}
+                                        </div>
+
+                                        {/* Action Buttons */}
+                                        <div className="d-flex flex-column flex-sm-row justify-content-center justify-content-md-start gap-2">
+                                            {/* View Jobs Button */}
+                                            <button
+                                                className="btn btn-sm btn-primary rounded-pill d-flex align-items-center justify-content-center"
+                                                onClick={() => handleViewJobs(company?.userId)}
+                                                aria-label={`View ${jobs.length} available jobs`}
+                                            >
+                                                <i className="bi bi-briefcase-fill me-1 me-sm-2" aria-hidden="true"></i>
+                                                <span>
+                                                    View {jobs.length} {jobs.length === 1 ? 'Job' : 'Jobs'}
+                                                </span>
+                                            </button>
+
+                                            {/* Contact Button */}
+                                            <button
+                                                className="btn btn-sm btn-outline-light rounded-pill d-flex align-items-center justify-content-center"
+                                                aria-label="Contact company"
+                                            >
+                                                <i className="bi bi-envelope-fill me-1 me-sm-2" aria-hidden="true"></i>
+                                                <span>Contact</span>
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Main Content */}
-                        <div className="container py-5">
+                        {/* Main Content Section */}
+                        <main className="container py-5">
                             <div className="row">
-                                <div className="col-lg-4 mb-4 mb-lg-0">
+                                {/* Sidebar - Company Details */}
+                                <aside className="col-lg-4 mb-4 mb-lg-0">
                                     <div className="card shadow-sm sticky-top" style={{ top: '20px' }}>
                                         <div className="card-body">
-                                            <h5 className="card-title mb-4">Company Details</h5>
+                                            <h2 className="h5 card-title mb-4">Company Details</h2>
                                             <ul className="list-group list-group-flush">
                                                 <li className="list-group-item d-flex justify-content-between align-items-center">
                                                     <span className="text-muted">Industry</span>
                                                     <span>{company.industry}</span>
                                                 </li>
                                                 <li className="list-group-item d-flex justify-content-between align-items-center">
-                                                    <span className="text-muted">Location</span>
-                                                    <span>{company.location}</span>
+                                                    <span className="text-muted">Headquarters</span>
+                                                    <span>{company.headquarters || 'Not specified'}</span>
+                                                </li>
+                                                {company.ceo?.ceoName && (
+                                                    <li className="list-group-item d-flex justify-content-between align-items-center">
+                                                        <span className="text-muted">CEO</span>
+                                                        <span>{company.ceo.ceoName}</span>
+                                                    </li>
+                                                )}
+                                                {company.founder?.founderName && (
+                                                    <li className="list-group-item d-flex justify-content-between align-items-center">
+                                                        <span className="text-muted">Founder</span>
+                                                        <span>{company.founder.founderName}</span>
+                                                    </li>
+                                                )}
+                                                <li className="list-group-item d-flex justify-content-between align-items-center">
+                                                    <span className="text-muted">Company Size</span>
+                                                    <span>{company.companySize || 'Not specified'}</span>
                                                 </li>
                                                 <li className="list-group-item d-flex justify-content-between align-items-center">
-                                                    <span className="text-muted">Founded</span>
-                                                    <span>{company.founded}</span>
+                                                    <span className="text-muted">Contact Phone</span>
+                                                    <span><a href={`tel:${company.contactPhone}`}>{company.contactPhone}</a></span>
                                                 </li>
                                                 <li className="list-group-item d-flex justify-content-between align-items-center">
-                                                    <span className="text-muted">Employees</span>
-                                                    <span>{company.employees}</span>
+                                                    <span className="text-muted">Contact Email</span>
+                                                    <span><a href={`mailto:${company.contactEmail}`}>{company.contactEmail}</a></span>
                                                 </li>
                                                 <li className="list-group-item d-flex justify-content-between align-items-center">
-                                                    <span className="text-muted">Open Jobs</span>
-                                                    <span className="badge bg-primary rounded-pill">{company.jobsCount}</span>
+                                                    <span className="text-muted">Member Since</span>
+                                                    <span>{new Date(company.createdAt).toLocaleDateString()}</span>
                                                 </li>
                                             </ul>
+
+                                            {/* Social Media Links */}
+                                            {company.socialMedia && (
+                                                <div className="mt-4">
+                                                    <h3 className="h6 mb-3">Connect With Us</h3>
+                                                    <div className="d-flex gap-2">
+                                                        {company.socialMedia.linkedin && (
+                                                            <a href={company.socialMedia.linkedin} target="_blank" rel="noopener noreferrer" className="btn btn-outline-primary btn-sm">
+                                                                <i className="bi bi-linkedin"></i>
+                                                            </a>
+                                                        )}
+                                                        {company.socialMedia.twitter && (
+                                                            <a href={company.socialMedia.twitter} target="_blank" rel="noopener noreferrer" className="btn btn-outline-info btn-sm">
+                                                                <i className="bi bi-twitter"></i>
+                                                            </a>
+                                                        )}
+                                                        {company.socialMedia.facebook && (
+                                                            <a href={company.socialMedia.facebook} target="_blank" rel="noopener noreferrer" className="btn btn-outline-primary btn-sm">
+                                                                <i className="bi bi-facebook"></i>
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                </div>
+                                </aside>
 
+                                {/* Main Content Area */}
                                 <div className="col-lg-8">
+                                    {/* Tab Navigation */}
                                     <div className="card shadow-sm mb-4">
                                         <div className="card-header bg-white">
                                             <ul className="nav nav-tabs card-header-tabs">
                                                 <li className="nav-item">
                                                     <button
-                                                        className={`nav-link ${activeTab === 'about' ? 'active' : ''}`}
+                                                        className={`btn btn-sm ${activeTab === 'about' ? 'btn-primary' : 'btn-outline-primary'} me-2`}
+                                                        // className={`nav-link ${activeTab === 'about' ? 'active' : ''}`}
                                                         onClick={() => setActiveTab('about')}
                                                     >
                                                         About
@@ -203,132 +266,188 @@ const SuperAdminCompaniesProfile = () => {
                                                 </li>
                                                 <li className="nav-item">
                                                     <button
-                                                        className={`nav-link ${activeTab === 'culture' ? 'active' : ''}`}
-                                                        onClick={() => setActiveTab('culture')}
+                                                        className={`btn btn-sm ${activeTab === 'locations' ? 'btn-primary' : 'btn-outline-primary'} me-2`}
+                                                        onClick={() => setActiveTab('locations')}
                                                     >
-                                                        Culture
+                                                        Locations
                                                     </button>
                                                 </li>
                                                 <li className="nav-item">
                                                     <button
-                                                        className={`nav-link ${activeTab === 'benefits' ? 'active' : ''}`}
-                                                        onClick={() => setActiveTab('benefits')}
+                                                        className={`btn btn-sm ${activeTab === 'keyDetails' ? 'btn-primary' : 'btn-outline-primary'} me-2`}
+                                                        onClick={() => setActiveTab('keyDetails')}
                                                     >
-                                                        Benefits
+                                                        Key Details
                                                     </button>
                                                 </li>
                                                 <li className="nav-item">
                                                     <button
-                                                        className={`nav-link ${activeTab === 'photos' ? 'active' : ''}`}
-                                                        onClick={() => setActiveTab('photos')}
+                                                        className={`btn btn-sm ${activeTab === 'jobs' ? 'btn-primary' : 'btn-outline-primary'} me-2`}
+                                                        onClick={() => setActiveTab('jobs')}
                                                     >
-                                                        Photos
+                                                        Jobs ({jobs.length})
                                                     </button>
                                                 </li>
                                             </ul>
                                         </div>
+
+                                        {/* Tab Content */}
                                         <div className="card-body">
+                                            {/* About Tab */}
                                             {activeTab === 'about' && (
-                                                <div>
-                                                    <h5 className="mb-3">About {company.name}</h5>
-                                                    <p className="text-muted">{company.about}</p>
-                                                </div>
+                                                <section>
+                                                    <h2 className="h5 mb-3">About {company.fullname}</h2>
+                                                    <p className="text-muted">{company.about || 'No description provided.'}</p>
+
+                                                    {company.tagline && (
+                                                        <blockquote className="blockquote text-center my-4 py-2 px-3 bg-light rounded">
+                                                            <p className="mb-0 fst-italic">"{company.tagline}"</p>
+                                                        </blockquote>
+                                                    )}
+
+                                                    {company.history?.length > 0 && (
+                                                        <div className="mt-4">
+                                                            <h3 className="h5 mb-3">Company History</h3>
+                                                            <ul className="list-unstyled">
+                                                                {company.history.map((item, index) => (
+                                                                    <li key={index} className="mb-2">
+                                                                        <strong>{item.key}:</strong> {item.value}
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    )}
+                                                </section>
                                             )}
-                                            {activeTab === 'culture' && (
-                                                <div>
-                                                    <h5 className="mb-3">Our Culture</h5>
-                                                    <p className="text-muted">{company.culture}</p>
-                                                </div>
-                                            )}
-                                            {activeTab === 'benefits' && (
-                                                <div>
-                                                    <h5 className="mb-3">Employee Benefits</h5>
-                                                    <div className="row">
-                                                        {company.benefits.map((benefit, index) => (
-                                                            <div key={index} className="col-md-6 mb-2">
-                                                                <div className="d-flex align-items-center">
-                                                                    <i className="bi bi-check-circle-fill text-success me-2"></i>
-                                                                    <span>{benefit}</span>
+
+                                            {/* Locations Tab */}
+                                            {activeTab === 'locations' && (
+                                                <section>
+                                                    <h2 className="h5 mb-3">Our Locations</h2>
+                                                    {company.locations?.length > 0 ? (
+                                                        <div className="row">
+                                                            {company.locations.map((location, index) => (
+                                                                <div key={index} className="col-md-6 mb-3">
+                                                                    <div className="card h-100 border-0 shadow-sm">
+                                                                        <div className="card-body">
+                                                                            <h3 className="h6 card-title">
+                                                                                <i className="bi bi-geo-alt-fill text-primary me-2"></i>
+                                                                                {location.city}
+                                                                            </h3>
+                                                                            <p className="card-text text-muted mb-0">{location.country}</p>
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-muted">No location information available.</p>
+                                                    )}
+                                                </section>
                                             )}
-                                            {activeTab === 'photos' && (
-                                                <div>
-                                                    <h5 className="mb-3">Life at {company.name}</h5>
-                                                    <div className="row g-3">
-                                                        {company.photos.map((photo, index) => (
-                                                            <div key={index} className="col-md-4">
-                                                                <img
-                                                                    src={photo}
-                                                                    alt={`Company photo ${index + 1}`}
-                                                                    className="img-fluid rounded shadow-sm"
-                                                                />
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
 
-                                    <div className="card shadow-sm">
-                                        <div className="card-body">
-                                            <div className="d-flex justify-content-between align-items-center mb-4">
-                                                <h5 className="mb-0">Open Positions</h5>
-                                                <button
-                                                    className="btn btn-primary"
-                                                    onClick={() => navigate(`/companies/${company.id}/jobs`)}
-                                                >
-                                                    View All Jobs
-                                                </button>
-                                            </div>
+                                            {/* Key Details Tab */}
+                                            {activeTab === 'keyDetails' && (
+                                                <section>
+                                                    <h2 className="h5 mb-3">Key Details</h2>
+                                                    {company.keyDetails?.length > 0 ? (
+                                                        <div className="row">
+                                                            {company.keyDetails.map((detail, index) => (
+                                                                <div key={index} className="col-md-6 mb-3">
+                                                                    <div className="card h-100 border-0 shadow-sm">
+                                                                        <div className="card-body">
+                                                                            <h3 className="h6 card-title text-primary">{detail.key}</h3>
+                                                                            <p className="card-text">{detail.value}</p>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <p className="text-muted">No key details available.</p>
+                                                    )}
 
-                                            {/* Sample job listings - in real app you would fetch these */}
-                                            <div className="list-group list-group-flush">
-                                                <div className="list-group-item py-3">
-                                                    <div className="d-flex justify-content-between">
-                                                        <div>
-                                                            <h6 className="mb-1">Senior Frontend Developer</h6>
-                                                            <div className="d-flex gap-3 text-muted small mb-2">
-                                                                <span><i className="bi bi-briefcase me-1"></i> Full-time</span>
-                                                                <span><i className="bi bi-geo-alt me-1"></i> Remote</span>
-                                                                <span><i className="bi bi-cash-stack me-1"></i> $120k - $150k</span>
+                                                    {company.departments?.length > 0 && (
+                                                        <div className="mt-4">
+                                                            <h3 className="h5 mb-3">Departments</h3>
+                                                            <div className="d-flex flex-wrap gap-2">
+                                                                {company.departments.map((dept, index) => (
+                                                                    <span key={index} className="badge bg-light text-dark">
+                                                                        {dept.key}
+                                                                    </span>
+                                                                ))}
                                                             </div>
                                                         </div>
-                                                        <button className="btn btn-sm btn-outline-primary align-self-center">
-                                                            Apply Now
+                                                    )}
+                                                </section>
+                                            )}
+
+                                            {/* Jobs Tab */}
+                                            {activeTab === 'jobs' && (
+                                                <section>
+                                                    <div className="d-flex justify-content-between align-items-center mb-4">
+                                                        <h2 className="h5 mb-0">Open Positions at {company.fullname}</h2>
+                                                        <button
+                                                            className="btn btn-primary btn-sm"
+                                                            onClick={() => handleViewJobs(company?.userId)}
+                                                        >
+                                                            View All Jobs
                                                         </button>
                                                     </div>
-                                                </div>
-                                                <div className="list-group-item py-3">
-                                                    <div className="d-flex justify-content-between">
-                                                        <div>
-                                                            <h6 className="mb-1">UX/UI Designer</h6>
-                                                            <div className="d-flex gap-3 text-muted small mb-2">
-                                                                <span><i className="bi bi-briefcase me-1"></i> Full-time</span>
-                                                                <span><i className="bi bi-geo-alt me-1"></i> San Francisco</span>
-                                                                <span><i className="bi bi-cash-stack me-1"></i> $100k - $130k</span>
-                                                            </div>
+
+                                                    {jobs.length > 0 ? (
+                                                        <div className="list-group list-group-flush">
+                                                            {jobs.slice(0, 5).map(job => (
+                                                                <div key={job._id} className="list-group-item py-3">
+                                                                    <div className="d-flex justify-content-between">
+                                                                        <div>
+                                                                            <h3 className="h6 mb-1">{job.title}</h3>
+                                                                            <div className="d-flex flex-wrap gap-3 text-muted small mb-2">
+                                                                                <span>
+                                                                                    <i className="bi bi-briefcase me-1"></i>
+                                                                                    {job.type}
+                                                                                </span>
+                                                                                <span>
+                                                                                    <i className="bi bi-geo-alt me-1"></i>
+                                                                                    {job.location}
+                                                                                </span>
+                                                                                <span>
+                                                                                    <i className="bi bi-cash-stack me-1"></i>
+                                                                                    {job.salary}
+                                                                                </span>
+                                                                            </div>
+                                                                            <p className="small text-muted mb-0">{job.description.substring(0, 100)}...</p>
+                                                                        </div>
+                                                                        <button
+                                                                            className="btn btn-sm btn-outline-primary align-self-center"
+                                                                            // onClick={() => navigate(`/jobs/${job._id}`)}
+                                                                            onClick={() => navigate(`/superadmin/companies-job-details`, { state: { job: job } })}
+                                                                        >
+                                                                            View Job
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
                                                         </div>
-                                                        <button className="btn btn-sm btn-outline-primary align-self-center">
-                                                            Apply Now
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                    ) : (
+                                                        <div className="alert alert-info">
+                                                            No current job openings. Check back later!
+                                                        </div>
+                                                    )}
+                                                </section>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </main>
                     </div>
                 </div>
             </div>
         </>
-    );
+    )
+
 };
+
 
 export default SuperAdminCompaniesProfile;

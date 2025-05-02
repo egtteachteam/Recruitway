@@ -1,35 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSuperAdminContext } from '../../../context/superadmin-context';
+import formatDateToRelative from '../../../Helper/dateFormatter';
 
 const SuperAdminAllCompanies = () => {
-    const [companies, setCompanies] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+
     const navigate = useNavigate()
+    const { isLoading, getAllCompanies, allCompaniesWithTheirJobs } = useSuperAdminContext()
 
     const [filters, setFilters] = useState({
         search: '',
         industry: 'All',
-        location: 'All',
-        size: 'All',
-        rating: 'All'
+        location: 'All'
     });
 
-    // Filter options
-    const industryOptions = ['All', 'Technology', 'Finance', 'Healthcare', 'Education', 'Manufacturing'];
-    const locationOptions = ['All', 'San Francisco, CA', 'New York, NY', 'Austin, TX', 'Remote'];
-    const sizeOptions = ['All', '1-50', '51-200', '201-500', '501-1000', '1000+'];
-    const ratingOptions = ['All', '4.0+', '4.5+', '5.0'];
+    // Extract unique industries and locations from company and job data
+    const industryOptions = [
+        'All',
+        ...Array.from(
+            new Set(
+                allCompaniesWithTheirJobs
+                    .map(c => c.company.industry)
+                    .filter(Boolean)
+            )
+        )
+    ];
 
-    // Filter companies based on filters
-    const filteredCompanies = companies.filter(company => {
-        return (
-            company.name.toLowerCase().includes(filters.search.toLowerCase()) &&
-            (filters.industry === 'All' || company.industry === filters.industry) &&
-            (filters.location === 'All' || company.location === filters.location) &&
-            (filters.size === 'All' || company.size === filters.size) &&
-            (filters.rating === 'All' || company.rating >= parseFloat(filters.rating))
+    const locationOptions = [
+        'All',
+        ...Array.from(
+            new Set(
+                allCompaniesWithTheirJobs.flatMap(c =>
+                    c.company.locations?.map(loc => `${loc.city}, ${loc.country}`) || []
+                ).filter(Boolean)
+            )
+        )
+    ];
+
+    const filteredCompanies = allCompaniesWithTheirJobs.filter(companyWrapper => {
+        const { company } = companyWrapper;
+
+        const companyName = company.fullname?.toLowerCase() || '';
+        const companyIndustry = company.industry?.toLowerCase() || '';
+
+        // Format company locations as "City, Country"
+        const companyLocations = (company.locations || []).map(loc =>
+            `${loc.city}, ${loc.country}`.toLowerCase()
         );
+
+        const selectedLocation = filters.location.toLowerCase();
+
+        // Filters
+        const matchesSearch = companyName.includes(filters.search.toLowerCase());
+        const matchesIndustry =
+            filters.industry === 'All' ||
+            companyIndustry === filters.industry.toLowerCase();
+        const matchesLocation =
+            filters.location === 'All' ||
+            companyLocations.includes(selectedLocation);
+
+        return matchesSearch && matchesIndustry && matchesLocation;
     });
 
     const handleFilterChange = (e) => {
@@ -41,150 +71,18 @@ const SuperAdminAllCompanies = () => {
     };
 
     useEffect(() => {
-        // Simulate API fetch
-        const fetchCompanies = async () => {
-            try {
-                // In a real app, you would fetch from your API
+        getAllCompanies()
+    }, [])
 
-                const mockCompanies = [
-                    {
-                      id: 1,
-                      name: 'Tech Solutions Inc.',
-                      logo: 'https://via.placeholder.com/60',
-                      industry: 'Technology',
-                      location: 'San Francisco, CA',
-                      size: '501-1000',
-                      rating: 4.5,
-                      description: 'Leading provider of innovative tech solutions for businesses worldwide.',
-                      jobsCount: 24
-                    },
-                    {
-                      id: 2,
-                      name: 'Green Earth Org.',
-                      logo: 'https://via.placeholder.com/60',
-                      industry: 'Environmental Services',
-                      location: 'Portland, OR',
-                      size: '201-500',
-                      rating: 4.2,
-                      description: 'Dedicated to sustainable solutions and environmental consulting.',
-                      jobsCount: 12
-                    },
-                    {
-                      id: 3,
-                      name: 'FinEdge Capital',
-                      logo: 'https://via.placeholder.com/60',
-                      industry: 'Finance',
-                      location: 'New York, NY',
-                      size: '1001-5000',
-                      rating: 4.7,
-                      description: 'Premier financial services and investment firm.',
-                      jobsCount: 35
-                    },
-                    {
-                      id: 4,
-                      name: 'MediCore Health',
-                      logo: 'https://via.placeholder.com/60',
-                      industry: 'Healthcare',
-                      location: 'Boston, MA',
-                      size: '501-1000',
-                      rating: 4.3,
-                      description: 'Innovating in medical diagnostics and patient care technologies.',
-                      jobsCount: 20
-                    },
-                    {
-                      id: 5,
-                      name: 'EduWave Learning',
-                      logo: 'https://via.placeholder.com/60',
-                      industry: 'Education',
-                      location: 'Austin, TX',
-                      size: '51-200',
-                      rating: 4.1,
-                      description: 'Building next-gen learning platforms for schools and universities.',
-                      jobsCount: 15
-                    },
-                    {
-                      id: 6,
-                      name: 'BuildRight Constructions',
-                      logo: 'https://via.placeholder.com/60',
-                      industry: 'Construction',
-                      location: 'Denver, CO',
-                      size: '1001-5000',
-                      rating: 3.9,
-                      description: 'Specialists in large-scale infrastructure and commercial buildings.',
-                      jobsCount: 30
-                    },
-                    {
-                      id: 7,
-                      name: 'SecureNet Cyber',
-                      logo: 'https://via.placeholder.com/60',
-                      industry: 'Cybersecurity',
-                      location: 'Seattle, WA',
-                      size: '201-500',
-                      rating: 4.6,
-                      description: 'Providing enterprise-level cybersecurity services and audits.',
-                      jobsCount: 18
-                    },
-                    {
-                      id: 8,
-                      name: 'StyleHouse Apparel',
-                      logo: 'https://via.placeholder.com/60',
-                      industry: 'Fashion',
-                      location: 'Los Angeles, CA',
-                      size: '501-1000',
-                      rating: 4.0,
-                      description: 'Modern fashion brand focused on eco-friendly materials.',
-                      jobsCount: 22
-                    },
-                    {
-                      id: 9,
-                      name: 'AgroTech Farms',
-                      logo: 'https://via.placeholder.com/60',
-                      industry: 'Agriculture',
-                      location: 'Des Moines, IA',
-                      size: '51-200',
-                      rating: 4.4,
-                      description: 'Revolutionizing agriculture with smart farming solutions.',
-                      jobsCount: 10
-                    },
-                    {
-                      id: 10,
-                      name: 'LogiChain Freight',
-                      logo: 'https://via.placeholder.com/60',
-                      industry: 'Logistics',
-                      location: 'Chicago, IL',
-                      size: '1001-5000',
-                      rating: 3.8,
-                      description: 'Efficient and reliable freight and logistics management.',
-                      jobsCount: 28
-                    }
-                  ];
-                  
-                setCompanies(mockCompanies);
-                setLoading(false);
-            } catch (err) {
-                setError(err.message);
-                setLoading(false);
-            }
-        };
-
-        fetchCompanies();
-    }, []);
-
-    const handleViewProfile = (companyId) => {
-        // Navigate to company profile
-        console.log(`View profile for company ${companyId}`);
-        navigate(`/superadmin/companiesProfile/${companyId}`)
-        // In a real app: navigate(`/companies/${companyId}`);
+    const handleViewProfile = (companyProfile, Jobs) => {
+        navigate('/superadmin/companiesProfile', { state: { companyProfile: companyProfile, jobs: Jobs } });
     };
 
     const handleViewJobs = (companyId) => {
-        // Navigate to company jobs
-        console.log(`View jobs for company ${companyId}`);
-        navigate(`/superadmin/companiesJobs/${companyId}/jobs`)
-        // In a real app: navigate(`/companies/${companyId}/jobs`);
+        navigate(`/superadmin/companiesJobs/${companyId}`);
     };
 
-    if (loading) {
+    if (isLoading) {
         return (
             <>
                 <div className="container-fluid">
@@ -193,20 +91,6 @@ const SuperAdminAllCompanies = () => {
                             <div className="spinner-border text-primary" role="status">
                                 <span className="visually-hidden">Loading...</span>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </>
-        );
-    }
-
-    if (error) {
-        return (
-            <>
-                <div className="container-fluid">
-                    <div className="container py-5">
-                        <div className="alert alert-danger">
-                            Error loading companies: {error}
                         </div>
                     </div>
                 </div>
@@ -231,7 +115,7 @@ const SuperAdminAllCompanies = () => {
                     {/* Search and Filters */}
                     <div className="row mb-4 g-3">
                         {/* Search Box */}
-                        <div className="col-12 col-md-6 col-lg-3">
+                        <div className="col-12 col-md-12 col-lg-6">
                             <div className="input-group">
                                 <span className="input-group-text bg-white border-end-0">
                                     <i className="bi bi-search text-muted"></i>
@@ -248,7 +132,7 @@ const SuperAdminAllCompanies = () => {
                         </div>
 
                         {/* Industry Filter */}
-                        <div className="col-6 col-md-6 col-lg-2">
+                        <div className="col-6 col-md-6 col-lg-3">
                             <select
                                 className="form-select"
                                 name="industry"
@@ -264,7 +148,7 @@ const SuperAdminAllCompanies = () => {
                         </div>
 
                         {/* Location Filter */}
-                        <div className="col-6 col-md-6 col-lg-2">
+                        <div className="col-6 col-md-6 col-lg-3">
                             <select
                                 className="form-select"
                                 name="location"
@@ -274,38 +158,6 @@ const SuperAdminAllCompanies = () => {
                                 {locationOptions.map(option => (
                                     <option key={option} value={option}>
                                         {option === 'All' ? 'All Locations' : option}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Company Size Filter */}
-                        <div className="col-6 col-md-6 col-lg-2">
-                            <select
-                                className="form-select"
-                                name="size"
-                                value={filters.size}
-                                onChange={handleFilterChange}
-                            >
-                                {sizeOptions.map(option => (
-                                    <option key={option} value={option}>
-                                        {option === 'All' ? 'All Sizes' : option}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Rating Filter */}
-                        <div className="col-6 col-md-6 col-lg-2">
-                            <select
-                                className="form-select"
-                                name="rating"
-                                value={filters.rating}
-                                onChange={handleFilterChange}
-                            >
-                                {ratingOptions.map(option => (
-                                    <option key={option} value={option}>
-                                        {option === 'All' ? 'All Ratings' : option}
                                     </option>
                                 ))}
                             </select>
@@ -332,7 +184,7 @@ const SuperAdminAllCompanies = () => {
                     <div className="row mb-3">
                         <div className="col-12">
                             <p className="text-muted mb-0">
-                                Showing {filteredCompanies.length} of {companies.length} companies
+                                Showing {filteredCompanies.length} of {allCompaniesWithTheirJobs.length} companies
                             </p>
                         </div>
                     </div>
@@ -341,67 +193,53 @@ const SuperAdminAllCompanies = () => {
                     <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                         {filteredCompanies.length > 0 ? (
                             filteredCompanies.map((company) => (
-                                <div key={company.id} className="col">
-                                    <div className="card h-100 shadow-sm hover-shadow transition-all">
-                                        <div className="card-body">
-                                            <div className="d-flex align-items-center mb-3">
-                                                <img
-                                                    src={company.logo}
-                                                    alt={`${company.name} logo`}
-                                                    className="rounded-circle me-3"
-                                                    width="60"
-                                                    height="60"
-                                                />
-                                                <div>
-                                                    <h5 className="card-title mb-0">{company.name}</h5>
-                                                    <div className="d-flex align-items-center">
-                                                        <small className="text-muted me-2">{company.industry}</small>
-                                                        <span className="badge bg-success bg-opacity-10 text-success small">
-                                                            <i className="bi bi-star-fill text-warning me-1"></i>
-                                                            {company.rating}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="mb-3">
-                                                <div className="d-flex flex-wrap gap-2 mb-2">
-                                                    <span className="badge bg-light text-dark">
-                                                        <i className="bi bi-geo-alt-fill me-1 text-primary"></i>
-                                                        {company.location}
-                                                    </span>
-                                                    <span className="badge bg-light text-dark">
-                                                        <i className="bi bi-people-fill me-1 text-primary"></i>
-                                                        {company.size}
-                                                    </span>
-                                                </div>
-                                                <p className="card-text text-muted">{company.description}</p>
-                                            </div>
-
-                                            {/* <div className="d-flex justify-content-between align-items-center"> */}
-                                            <div class="d-flex justify-content-between align-items-center flex-row flex-md-column flex-xl-row">
-                                                <span className="small text-muted">
-                                                    <i className="bi bi-briefcase-fill me-1"></i>
-                                                    {company.jobsCount} openings
-                                                </span>
-                                                <div className="d-flex gap-2">
-                                                    <button
-                                                        onClick={() => handleViewProfile(company.id)}
-                                                        className="btn btn-outline-primary btn-sm rounded-pill px-3"
-                                                    >
-                                                        <i className="bi bi-person-lines-fill me-1"></i> Profile
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleViewJobs(company.id)}
-                                                        className="btn btn-primary btn-sm rounded-pill px-3"
-                                                    >
-                                                        <i className="bi bi-briefcase-fill me-1"></i> Jobs
-                                                    </button>
-                                                </div>
+                                <article key={company.company._id} className="col">
+                                    <div className="card h-100 border-0 shadow-lg hover-shadow transition-all overflow-hidden">
+                                        <div className="text-center pt-4">
+                                            <img
+                                                src={company.company.profilePicture || "/images/profile/user-1.jpg"}
+                                                alt={`${company.company.fullname} logo`}
+                                                className="rounded-circle border border-3 border-primary shadow-sm"
+                                                width="90"
+                                                height="90"
+                                                loading="lazy"
+                                            />
+                                        </div>
+                                        <div className="card-body text-center">
+                                            <h5 className="fw-bold text-primary mb-1">{company.company.fullname}</h5>
+                                            <p className="mb-1 text-muted small">
+                                                <i className="bi bi-building me-1 text-secondary"></i>
+                                                {company.company.industry}
+                                            </p>
+                                            <p className="mb-1 text-muted small">
+                                                <i className="bi bi-envelope me-1 text-secondary"></i>
+                                                {company.company.contactEmail}
+                                            </p>
+                                            <p className="mb-1 text-muted small">
+                                                <i className="bi bi-geo-alt-fill text-secondary"></i>
+                                                {company.company.headquarters}
+                                            </p>
+                                            <p className="mb-3 text-muted small">
+                                                <i className="bi bi-clock-history me-1 text-secondary"></i>
+                                                Last active {formatDateToRelative(company.company.lastActive)}
+                                            </p>
+                                            <div className="d-flex justify-content-center gap-2">
+                                                <button
+                                                    onClick={() => handleViewProfile(company.company, company.jobs)}
+                                                    className="btn btn-outline-primary btn-sm rounded-pill px-3"
+                                                >
+                                                    <i className="bi bi-person-lines-fill me-1"></i> Profile
+                                                </button>
+                                                <button
+                                                    onClick={() => handleViewJobs(company?.company?.userId)}
+                                                    className="btn btn-primary btn-sm rounded-pill px-3"
+                                                >
+                                                    <i className="bi bi-briefcase-fill me-1"></i> Jobs
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </article>
                             ))
                         ) : (
                             <div className="col-12 w-100 mb-5">

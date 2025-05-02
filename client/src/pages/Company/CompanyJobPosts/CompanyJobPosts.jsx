@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import DeleteConfirmaton from '../../../components/DeleteConfirmaton';
 import { useCompanyContext } from '../../../context/company-context';
 import formatDateToRelative from '../../../Helper/dateFormatter';
+import DeleteConfirmationModal from '../../../components/DeleteConfirmationModal';
 
 // const JobPostCard = ({ isOpen, job, onClose }) => {
 //     // const { title, company, location, salary, type, experience, posted, description, requirements, skills, applicants, status } = job;
@@ -1951,6 +1951,7 @@ const JobPostCard = ({ isOpen, job, onClose, setJobPostOpen, jobList, setJobList
 
     const handleCancelDelete = () => {
         setIsModalOpen(false);
+        setJobToDelete(null);
     };
 
     const { title, company, location, salary, type, experience, posted, description, requirements, skills, applicants, status } =
@@ -2330,7 +2331,7 @@ const JobPostCard = ({ isOpen, job, onClose, setJobPostOpen, jobList, setJobList
                     </div>
                 </div>
             </div>
-            <DeleteConfirmaton
+            <DeleteConfirmationModal
                 isOpen={isModalOpen}
                 onClose={handleCancelDelete}
                 onConfirm={handleDeleteJob}

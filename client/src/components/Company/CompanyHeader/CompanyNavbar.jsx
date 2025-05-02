@@ -233,10 +233,7 @@ const ProfileDropdown = ({ user, logout }) => {
     const dropdownRef = useRef(null);
     const buttonRef = useRef(null);
     const navigate = useNavigate()
-
-    console.log(user);
-
-
+    
     const handleClick = (e) => {
         e.preventDefault();
         setShowDropdown(!showDropdown);

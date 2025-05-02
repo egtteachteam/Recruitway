@@ -54,6 +54,10 @@ const jobSchema = new Schema({
         type: String,
         enum: ["Active", "Inactive", "Draft"],
         required: true
+    },
+    isFlagged: {
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true });
 

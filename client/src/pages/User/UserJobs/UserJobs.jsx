@@ -21,9 +21,6 @@ const UserJobs = () => {
         getAllJobs()
     }, [])
 
-    console.log(jobs);
-
-
     const handleViewJob = (job) => {
         setSelectedJob(job);
     };

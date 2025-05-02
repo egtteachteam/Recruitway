@@ -71,6 +71,10 @@ import NotificationsPage from './pages/Company/CompanyNotification/Notifications
 import SuperAdminAllCompanies from './pages/SuperAdmin/SuperAdminAllCompanies/SuperAdminAllCompanies';
 import SuperAdminCompaniesProfile from './pages/SuperAdmin/SuperAdminCompaniesProfile/SuperAdminCompaniesProfile';
 import SuperAdminCompaniesJobs from './pages/SuperAdmin/SuperAdminCompaniesJobs/SuperAdminCompaniesJobs';
+import SuperAdminJobDetailsPage from './pages/SuperAdmin/SuperAdminJobDetailsPage/SuperAdminJobDetailsPage';
+import ViewApplicantPage from './pages/SuperAdmin/SuperAdminApplicantsPages/ViewApplicantPage';
+import ManageApplicantsPage from './pages/SuperAdmin/SuperAdminApplicantsPages/ManageApplicantsPage';
+import AllApplicantsPage from './pages/SuperAdmin/SuperAdminApplicantsPages/AllApplicantsPage';
 
 function App() {
 
@@ -201,8 +205,12 @@ function App() {
           <Route path='dashboard' element={<SuperAdminDashBoard />} />
           <Route path='profile' element={<SuperAdminProfile />} />
           <Route path='allCompanies' element={<SuperAdminAllCompanies />} />
-          <Route path='companiesProfile/:id' element={<SuperAdminCompaniesProfile />} />
-          <Route path='companiesJobs/:id/jobs' element={<SuperAdminCompaniesJobs />} />
+          <Route path='companiesProfile' element={<SuperAdminCompaniesProfile />} />
+          <Route path='companiesJobs/:companyId' element={<SuperAdminCompaniesJobs />} />
+          <Route path='companies-job-details/:jobId' element={<SuperAdminJobDetailsPage />} />
+          <Route path='jobs/:id/viewallapplicants' element={<AllApplicantsPage />} />
+          <Route path='jobs/:id/applicants' element={<ViewApplicantPage />} />
+          <Route path='jobs/:id/manageapplicants' element={<ManageApplicantsPage />} />
           <Route path='setting' element={<SettingsPage />} />
           <Route path='a' element={<AppContact />} />
 
