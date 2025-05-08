@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import LogoAnimation from '../components/LogoAnimation';
 import { useAuthContext } from '../context/auth-context';
 import { Link, useNavigate } from 'react-router-dom';
@@ -269,14 +269,14 @@ const Login = () => {
                                         </a>
                                     </div>
                                 </div>
-                                <div className="position-relative text-center my-4">
+                                {/* <div className="position-relative text-center my-4">
                                     <p className="mb-0 fs-4 px-3 d-inline-block bg-white text-dark z-index-5 position-relative">or sign in
                                         with</p>
                                     <span className="border-top w-100 position-absolute top-50 start-50 translate-middle"></span>
-                                </div>
+                                </div> */}
 
                                 {/* Sign Up Link */}
-                                <div className="text-center small">
+                                <div className="text-center small mt-5">
                                     <span className="text-muted">Don't have an account? </span>
                                     <Link to="/register" className="text-decoration-none fw-medium">
                                         Sign up

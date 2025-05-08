@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Interview Updated</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: #f39c12;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .content {
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+
+        .details {
+            background-color: white;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #777;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Interview Updated</h1>
+        </div>
+
+        <div class="content">
+            <p>Dear <strong>
+                    <%= candidateName %>
+                </strong>,</p>
+            <p>Your interview schedule has been updated. Please find the new details below:</p>
+
+            <div class="details">
+                <h3>Updated Interview Details</h3>
+                <p><strong>Position:</strong>
+                    <%= jobTitle %>
+                </p>
+                <p><strong>Interviewer:</strong>
+                    <%= interviewerName %>
+                </p>
+                <p><strong>Date:</strong>
+                    <%= date %>
+                </p>
+                <p><strong>Time:</strong>
+                    <%= newTime %> - <%= endTime %>
+                </p>
+                <p><strong>Location/Medium:</strong>
+                    <%= newLocation %>
+                </p>
+                <p><strong>Additional Notes:</strong>
+                    <%= notes %>
+                </p>
+            </div>
+
+            <p>Please make sure to attend the interview at the updated time.</p>
+            <p>If you have any questions, feel free to reach out to the recruitment team.</p>
+            <p>Best regards,<br>The RecruitWay Team</p>
+        </div>
+
+        <div class="footer">
+            <p>This is an automated message. Please do not reply directly to this email.</p>
+        </div>
+    </div>
+</body>
+
+</html>

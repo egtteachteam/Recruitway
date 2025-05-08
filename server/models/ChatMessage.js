@@ -3,12 +3,12 @@ const { Schema, model } = require('mongoose');
 const chatMessageSchema = new Schema({
     sender: {
         type: Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Auth',
         required: true
     },
     receiver: {
         type: Schema.Types.ObjectId,
-        ref: 'User',
+        ref: 'Auth',
         required: true
     },
     text: {
@@ -22,7 +22,7 @@ const chatMessageSchema = new Schema({
     },
     deletedFor: [{
         type: Schema.Types.ObjectId,
-        ref: 'User'
+        ref: 'Auth'
     }],
     createdAt: {
         type: Date,

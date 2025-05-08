@@ -3,7 +3,6 @@ const Interview = require('../models/Interview');
 const User = require('../models/User');
 const cloudinary = require("../config/cloudinary");
 const Job = require('../models/Job');
-const ApplyJob = require('../models/ApplyJob');
 const CandidateProfile = require('../models/Auth/Candidate-model');
 const Auth = require('../models/Auth/Auth-model');
 const Notification = require('../models/Notification-modal');

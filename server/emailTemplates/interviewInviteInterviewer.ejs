@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Interview Invitation (Interviewer)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: #3498db;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .content {
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+
+        .details {
+            background-color: white;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #777;
+        }
+
+        a {
+            color: #2980b9;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Upcoming Interview Assignment</h1>
+        </div>
+
+        <div class="content">
+            <p>Dear <strong>
+                    <%= name %>
+                </strong>,</p>
+            <p>You have been assigned as an interviewer for the following session:</p>
+
+            <div class="details">
+                <p><strong>Job Title:</strong>
+                    <%= jobTitle %>
+                </p>
+                <p><strong>Scheduled Time:</strong>
+                    <%= scheduledTime %>
+                </p>
+                <p><strong>Meeting Link:</strong> <a href="<%= meetingLink %>">
+                        <%= meetingLink %>
+                    </a></p>
+            </div>
+
+            <p>
+                <%= message %>
+            </p>
+
+            <p>Please be on time and ensure you are prepared with any required evaluation material.</p>
+            <p>Thank you for your support,<br>The RecruitWay Team</p>
+        </div>
+
+        <div class="footer">
+            <p>This is an automated message. Please do not reply directly to this email.</p>
+        </div>
+    </div>
+</body>
+
+</html>

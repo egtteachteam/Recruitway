@@ -1,6 +1,6 @@
 import { Toaster } from 'react-hot-toast'
-import './App.css'
-import Login from './pages/login'
+import './App.css';
+import Login from './pages/Login';
 import Register from './pages/Register'
 import { Navigate, Route, Routes } from 'react-router-dom';
 import AppContact from './pages/AppContact';
@@ -75,6 +75,12 @@ import SuperAdminJobDetailsPage from './pages/SuperAdmin/SuperAdminJobDetailsPag
 import ViewApplicantPage from './pages/SuperAdmin/SuperAdminApplicantsPages/ViewApplicantPage';
 import ManageApplicantsPage from './pages/SuperAdmin/SuperAdminApplicantsPages/ManageApplicantsPage';
 import AllApplicantsPage from './pages/SuperAdmin/SuperAdminApplicantsPages/AllApplicantsPage';
+import SuperAdminScheduleInterview from './pages/SuperAdmin/SuperAdminScheduleInterview/SuperAdminScheduleInterview';
+import SuperAdminInterviewer from './pages/SuperAdmin/SuperAdminInterviewer/SuperAdminInterviewer';
+import InterviewReportGenerator from './pages/Interviewer/InterviewReportGenerator/InterviewReportGenerator';
+import SuperAdminAllCandidates from './pages/SuperAdmin/SuperAdminAllCandidates/SuperAdminAllCandidates';
+import SuperAdminCompaniesCard from './pages/SuperAdmin/SuperAdminCompaniesCard/SuperAdminCompaniesCard';
+import SuperAdminAllInterviews from './pages/SuperAdmin/SuperAdminAllInterviews/SuperAdminAllInterviews';
 
 function App() {
 
@@ -152,6 +158,7 @@ function App() {
         <Route path="/openAitest" element={<OpenAiTest />} />
         <Route path="/sendlinkmodel" element={<SendLinkModal />} />
         <Route path="/test" element={<Test />} />
+        <Route path="/generateReport" element={<InterviewReportGenerator />} />
 
         {/* Company Routes */}
         <Route path="/company" element={
@@ -204,14 +211,19 @@ function App() {
         }>
           <Route path='dashboard' element={<SuperAdminDashBoard />} />
           <Route path='profile' element={<SuperAdminProfile />} />
+          <Route path='interviewers' element={<SuperAdminInterviewer />} />
           <Route path='allCompanies' element={<SuperAdminAllCompanies />} />
+          <Route path='allCandidates' element={<SuperAdminAllCandidates />} />
+          <Route path='companies' element={<SuperAdminCompaniesCard />} />
+          <Route path='allInterviews' element={<SuperAdminAllInterviews />} />
           <Route path='companiesProfile' element={<SuperAdminCompaniesProfile />} />
           <Route path='companiesJobs/:companyId' element={<SuperAdminCompaniesJobs />} />
           <Route path='companies-job-details/:jobId' element={<SuperAdminJobDetailsPage />} />
           <Route path='jobs/:id/viewallapplicants' element={<AllApplicantsPage />} />
           <Route path='jobs/:id/applicants' element={<ViewApplicantPage />} />
-          <Route path='jobs/:id/manageapplicants' element={<ManageApplicantsPage />} />
+          <Route path='scheduleInterview' element={<SuperAdminScheduleInterview />} />
           <Route path='setting' element={<SettingsPage />} />
+          <Route path='jobs/:id/manageapplicants' element={<ManageApplicantsPage />} />
           <Route path='a' element={<AppContact />} />
 
           <Route path='CandidateManagement' element={<CandidateManagement />} />

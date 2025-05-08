@@ -174,7 +174,7 @@ const Register = () => {
                                         className="d-inline-block align-top"
                                     />
                                 </Link>
-                                <h2 className="mb-0 fs-4 fw-bold">Create Account</h2>
+                                <h2 className="mb-0 fs-4 fw-bold text-white">Create Account</h2>
                             </div>
                         </div>
 

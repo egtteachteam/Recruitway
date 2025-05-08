@@ -421,7 +421,7 @@ const SuperAdminCompaniesProfile = () => {
                                                                         <button
                                                                             className="btn btn-sm btn-outline-primary align-self-center"
                                                                             // onClick={() => navigate(`/jobs/${job._id}`)}
-                                                                            onClick={() => navigate(`/superadmin/companies-job-details`, { state: { job: job } })}
+                                                                            onClick={() => navigate(`/superadmin/companies-job-details/${job._id}`, { state: { job: job } })}
                                                                         >
                                                                             View Job
                                                                         </button>

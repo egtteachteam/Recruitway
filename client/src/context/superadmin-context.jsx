@@ -8,7 +8,6 @@ const SuperAdmminContext = createContext()
 
 const initialState = {
     isLoading: false,
-    companies: [],
     allCompaniesWithTheirJobs: [],
     companieProfile: [],
     companyJobs: [],
@@ -17,7 +16,11 @@ const initialState = {
         job: {},
         applicant: []
     },
-    applicantProfile: {}
+    applicantProfile: {},
+    interviewers: [],
+    companies: [],
+    candidates: [],
+    interviewes: [],
 }
 
 const SuperAdminProvider = ({ children }) => {
@@ -27,11 +30,11 @@ const SuperAdminProvider = ({ children }) => {
 
     const token = localStorage.getItem("token")
 
-    const getAllCompanies = async () => {
+    const getAllCompaniesWithJobs = async () => {
         dispatch({ type: "SET_LOADING" });
 
         try {
-            const response = await axios.get(`${server}/api/v1/superadmin/get-all-companies`,
+            const response = await axios.get(`${server}/api/v1/superadmin/get-all-companies-with-jobs`,
                 {
                     headers:
                     {
@@ -41,7 +44,7 @@ const SuperAdminProvider = ({ children }) => {
 
             const { companiesWithJobs } = response.data;
 
-            dispatch({ type: "SET_ALL_COMPANIES", payload: companiesWithJobs });
+            dispatch({ type: "SET_ALL_COMPANIES_WITH_JOBS", payload: companiesWithJobs });
         } catch (error) {
             console.error("Error fetching companies:", error);
 
@@ -128,8 +131,6 @@ const SuperAdminProvider = ({ children }) => {
             toast.error(errorMessage);
         }
     }
-
-    const handleViewApplicants = async () => { }
 
     const handleMarkAsFlag = async (jobId) => {
         dispatch({ type: "SET_LOADING" });
@@ -248,8 +249,233 @@ const SuperAdminProvider = ({ children }) => {
 
             dispatch({ type: "SET_SINGLE_APPLICANTS_DATA", payload: applicantProfile });
         } catch (error) {
+            // console.error("Error fetching companies:", error);
+            dispatch({ type: "SET_LOADING_FALSE" });
+            const errorMessage = error.response?.data?.message || "Something went wrong. Please try again.";
+            toast.dismiss();
+            toast.error(errorMessage);
+        }
+    }
+
+    const getAllInterviewers = async () => {
+        try {
+            dispatch({ type: "SET_LOADING" });
+            const res = await axios.get(`${server}/api/v1/superadmin/getAllInterviewers`, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+            const { data } = res.data;
+            dispatch({ type: "SET_INTERVIEWER", payload: data });
+
+        } catch (error) {
+            // console.error("Error fetching interviewers:", error);
+            dispatch({ type: "SET_LOADING_FALSE" });
+            const errorMessage = error.response?.data?.message || "Something went wrong. Please try again.";
+            toast.dismiss();
+            toast.error(errorMessage);
+        }
+    };
+
+    const getAllCompaniesWithVerificationStatus = async () => {
+        dispatch({ type: "SET_LOADING" });
+
+        try {
+            const response = await axios.get(`${server}/api/v1/superadmin/get-all-companies-with-verification-status`,
+                {
+                    headers:
+                    {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+            const { companies } = response.data;
+
+            dispatch({ type: "SET_ALL_COMPANIES_WITH_VERIFICATION_STATUS", payload: companies });
+        } catch (error) {
+            console.error("Error fetching companies:", error);
+
+            dispatch({ type: "SET_LOADING_FALSE" });
+
+            const errorMessage = error.response?.data?.message || "Something went wrong. Please try again.";
+            toast.dismiss();
+            toast.error(errorMessage);
+        }
+    };
+
+    const handleCompanyMakeVerified = async (id) => {
+        try {
+            const response = await axios.patch(`${server}/api/v1/superadmin/makeCompaniesVerified/${id}`, {}, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            const { message } = response.data;
+            toast.dismiss();
+            toast.success(message);
+            getAllCompaniesWithVerificationStatus(); // Refresh list
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || "Something went wrong. Please try again.";
+            toast.dismiss();
+            toast.error(errorMessage);
+        }
+    };
+
+    const handleCompanyMakeUnVerified = async (id) => {
+        try {
+            const response = await axios.patch(`${server}/api/v1/superadmin/makeCompaniesUnverified/${id}`, {}, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            const { message } = response.data;
+            toast.dismiss();
+            toast.success(message);
+            getAllCompaniesWithVerificationStatus(); // Refresh list
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || "Something went wrong. Please try again.";
+            toast.dismiss();
+            toast.error(errorMessage);
+        }
+    };
+
+    const getAllCandidatesWithVerificationStatus = async () => {
+        dispatch({ type: "SET_LOADING" });
+
+        try {
+            const response = await axios.get(`${server}/api/v1/superadmin/get-all-candidates-with-verification-status`,
+                {
+                    headers:
+                    {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+            const { candidates } = response.data;
+
+            dispatch({ type: "SET_ALL_CANDIDATES_WITH_VERIFICATION_STATUS", payload: candidates });
+        } catch (error) {
+            console.error("Error fetching companies:", error);
+
+            dispatch({ type: "SET_LOADING_FALSE" });
+
+            const errorMessage = error.response?.data?.message || "Something went wrong. Please try again.";
+            toast.dismiss();
+            toast.error(errorMessage);
+        }
+    };
+
+    const handleCandidateMakeVerified = async (id) => {
+        try {
+            const response = await axios.patch(`${server}/api/v1/superadmin/makeCandidateVerified/${id}`, {}, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            const { message } = response.data;
+            toast.dismiss();
+            toast.success(message);
+            getAllCandidatesWithVerificationStatus(); // Refresh list
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || "Something went wrong. Please try again.";
+            toast.dismiss();
+            toast.error(errorMessage);
+        }
+    };
+
+    const handleCandidateMakeUnVerified = async (id) => {
+        try {
+            const response = await axios.patch(`${server}/api/v1/superadmin/makeCandidateUnverified/${id}`, {}, {
+                headers: {
+                    Authorization: `Bearer ${token}`
+                }
+            });
+
+            const { message } = response.data;
+            toast.dismiss();
+            toast.success(message);
+            getAllCandidatesWithVerificationStatus(); // Refresh list
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || "Something went wrong. Please try again.";
+            toast.dismiss();
+            toast.error(errorMessage);
+        }
+    };
+
+    const getAllInterviews = async () => {
+        dispatch({ type: "SET_LOADING" });
+        try {
+            const response = await axios.get(`${server}/api/v1/superadmin/get-all-interviews-of-all-candidates`,
+                {
+                    headers:
+                    {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+            const { interviewes } = response.data;
+
+            dispatch({ type: "SET_ALL_INTERVIEWS_OF_ALL_CANDIDATES", payload: interviewes });
+        } catch (error) {
+            console.error("Error fetching companies:", error);
+
+            dispatch({ type: "SET_LOADING_FALSE" });
+
+            const errorMessage = error.response?.data?.message || "Something went wrong. Please try again.";
+            toast.dismiss();
+            toast.error(errorMessage);
+        }
+    }
+
+    const handleSendEmail = async (interviewId, emailData) => {
+        dispatch({ type: "SET_LOADING" });
+        try {
+            const res = await axios.post(`${server}/api/v1/superadmin/candidateandinterviewer/${interviewId}/send-invite`,
+                emailData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+            const { message } = res.data
+            toast.dismiss();
+            toast.success(message);
+            dispatch({ type: "SET_LOADING_FALSE" });
+        } catch (error) {
             console.error("Error fetching companies:", error);
             dispatch({ type: "SET_LOADING_FALSE" });
+            const errorMessage = error.response?.data?.message || "Failed to send interview link";
+            toast.dismiss();
+            toast.error(errorMessage);
+        }
+    };
+
+    const markAsCancelled = async (interviewId) => {
+        dispatch({ type: "SET_LOADING" });
+        try {
+            const response = await axios.post(`${server}/api/v1/superadmin/markAsCancelled/${interviewId}`,
+                {},
+                {
+                    headers:
+                    {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+            const { message } = response.data;
+            toast.dismiss()
+            toast.success(message)
+            getAllInterviews()
+            dispatch({ type: "SET_LOADING_FALSE" });
+        } catch (error) {
+            console.error("Error fetching companies:", error);
+
+            dispatch({ type: "SET_LOADING_FALSE" });
+
             const errorMessage = error.response?.data?.message || "Something went wrong. Please try again.";
             toast.dismiss();
             toast.error(errorMessage);
@@ -259,16 +485,25 @@ const SuperAdminProvider = ({ children }) => {
     return (
         <SuperAdmminContext.Provider value={{
             ...state,
-            getAllCompanies,
+            getAllCompaniesWithJobs,
             getAllJobOfSingleCompany,
             getDetailsOfSingleJob,
             handleChangeStatus,
-            handleViewApplicants,
             handleMarkAsFlag,
             handleMarkAsUnFlag,
             handleConfirmDeleteJob,
             handleApplicants,
-            getApplicantsProfile
+            getApplicantsProfile,
+            getAllInterviewers,
+            getAllCompaniesWithVerificationStatus,
+            handleCompanyMakeVerified,
+            handleCompanyMakeUnVerified,
+            getAllCandidatesWithVerificationStatus,
+            handleCandidateMakeVerified,
+            handleCandidateMakeUnVerified,
+            getAllInterviews,
+            handleSendEmail,
+            markAsCancelled
         }}>
             {children}
         </SuperAdmminContext.Provider>

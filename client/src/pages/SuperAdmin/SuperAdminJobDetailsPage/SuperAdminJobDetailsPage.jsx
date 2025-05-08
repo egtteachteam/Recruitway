@@ -341,7 +341,7 @@ const SuperAdminJobDetailsPage = () => {
 
     return (
         <>
-            <div className="container-fluid bg-light">
+            <div className="container-fluid">
                 <div className="container py-5">
                     {/* Back Button */}
                     <button

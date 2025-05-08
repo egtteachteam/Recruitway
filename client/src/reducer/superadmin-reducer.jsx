@@ -1,30 +1,3 @@
-// const superAdminReducer = (state, action) => {
-
-//     switch (action.type) {
-
-//         case "SET_LOADING":
-//             return {
-//                 ...state,
-//                 isLoading: true,
-//             }
-
-//         case "SET_ALL_COMPANIES":
-//             return {
-//                 ...state,
-//                 isLoading: false,
-//                 companieProfile: action.payload.companieProfile,
-//                 companyJobs: action.payload.companyJobs
-//             }
-
-//         default:
-//             return state
-//     }
-// }
-
-// export default superAdminReducer
-
-
-
 const superAdminReducer = (state, action) => {
     switch (action.type) {
         case "SET_LOADING":
@@ -39,7 +12,7 @@ const superAdminReducer = (state, action) => {
                 isLoading: false
             };
 
-        case "SET_ALL_COMPANIES":
+        case "SET_ALL_COMPANIES_WITH_JOBS":
             return {
                 ...state,
                 isLoading: false,
@@ -75,6 +48,34 @@ const superAdminReducer = (state, action) => {
                 ...state,
                 isLoading: false,
                 applicantProfile: action.payload
+            }
+
+        case "SET_INTERVIEWER":
+            return {
+                ...state,
+                isLoading: false,
+                interviewers: action.payload
+            }
+
+        case "SET_ALL_COMPANIES_WITH_VERIFICATION_STATUS":
+            return {
+                ...state,
+                isLoading: false,
+                companies: action.payload
+            }
+
+        case "SET_ALL_CANDIDATES_WITH_VERIFICATION_STATUS":
+            return {
+                ...state,
+                isLoading: false,
+                candidates: action.payload
+            }
+
+        case "SET_ALL_INTERVIEWS_OF_ALL_CANDIDATES":
+            return {
+                ...state,
+                isLoading: false,
+                interviewes: action.payload
             }
 
         default:

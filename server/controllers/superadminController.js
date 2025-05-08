@@ -6,6 +6,12 @@ const CompanyProfile = require('../models/Auth/Company-model');
 const Job = require('../models/Job');
 const JobApplication = require('../models/JobApplication-model');
 const CandidateProfile = require('../models/Auth/Candidate-model');
+const Interview = require('../models/Interview-model');
+const { default: mongoose } = require('mongoose');
+const axios = require("axios");
+const { sendInterviewEmail } = require('../utils/interview-emailService');
+const Interviewer = require('../models/Interviewer-model');
+const getZoomAccessToken = require('../utils/zoomTokenManager');
 
 const getProfile = async (req, res) => {
     try {
@@ -102,7 +108,7 @@ const createProfile = async (req, res) => {
     }
 };
 
-const getAllCompanies = async (req, res) => {
+const getAllCompaniesWithJobs = async (req, res) => {
     try {
 
         const allCompanyUsers = await Auth.find({ role: "company" }).select("_id");
@@ -366,6 +372,674 @@ const getSingleApplicants = async (req, res) => {
     }
 };
 
+const createInterviews = async (req, res) => {
+    try {
+        const {
+            candidateId,
+            candidateName,
+            interviewerId,
+            interviewerName,
+            jobId,
+            jobTitle,
+            companyId,
+            companyName,
+            location,
+            start,
+            end,
+            notes,
+            status = 'scheduled'
+        } = req.body;
+
+        // 🔒 Validate required fields
+        if (!candidateId || !jobId || !interviewerId || !start || !end || !location) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields: candidateId, jobId, interviewerId, start, end, location'
+            });
+        }
+
+        // 🧠 Fetch related documents
+        const [candidate, job, interviewer] = await Promise.all([
+            CandidateProfile.findOne({ userId: candidateId }),
+            Job.findById(jobId),
+            Interviewer.findById(interviewerId)
+        ]);
+
+        if (!candidate) return res.status(404).json({ success: false, message: 'Candidate not found' });
+        if (!job) return res.status(404).json({ success: false, message: 'Job not found' });
+        if (!interviewer) return res.status(404).json({ success: false, message: 'Interviewer not found' });
+
+        // 🕒 Validate dates
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        if (isNaN(startDate) || isNaN(endDate)) {
+            return res.status(400).json({ success: false, message: 'Invalid date format' });
+        }
+        if (startDate >= endDate) {
+            return res.status(400).json({ success: false, message: 'End time must be after start time' });
+        }
+
+        // 🚫 Check for conflicts
+        const conflictingInterview = await Interview.findOne({
+            $or: [
+                {
+                    interviewerId: interviewer._id,
+                    start: { $lt: endDate },
+                    end: { $gt: startDate }
+                },
+                {
+                    candidateId,
+                    start: { $lt: endDate },
+                    end: { $gt: startDate }
+                }
+            ],
+            isActive: true
+        });
+
+        if (conflictingInterview) {
+            return res.status(409).json({
+                success: false,
+                message: 'Scheduling conflict detected',
+                conflictWith: conflictingInterview.interviewerId.equals(interviewer._id) ? 'interviewer' : 'candidate',
+                conflictingInterviewId: conflictingInterview._id
+            });
+        }
+
+        // 🎥 Create Zoom Meeting
+        const accessToken = await getZoomAccessToken();
+        const zoomRes = await axios.post(
+            'https://api.zoom.us/v2/users/me/meetings',
+            {
+                topic: `${candidateName} Interview with ${interviewerName}`,
+                type: 2,
+                start_time: startDate.toISOString(),
+                duration: Math.ceil((endDate - startDate) / 60000),
+                timezone: 'UTC',
+                settings: {
+                    host_video: true,
+                    participant_video: true,
+                },
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${accessToken}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        // 💾 Save interview to DB
+        const newInterview = await Interview.create({
+            candidateId,
+            candidateName,
+            jobId,
+            jobTitle,
+            companyId,
+            companyName,
+            interviewerId,
+            interviewerName,
+            start: startDate,
+            end: endDate,
+            location,
+            notes,
+            status,
+            zoomJoinUrl: zoomRes.data.join_url,
+            zoomStartUrl: zoomRes.data.start_url,
+            isActive: true
+        });
+
+        // 📧 Send confirmation email
+        await sendInterviewEmail({
+            to: candidate.email,
+            subject: 'Interview Scheduled',
+            template: 'interviewScheduled',
+            context: {
+                candidateName: candidate.fullname,
+                jobTitle: job.title,
+                interviewerName,
+                date: startDate.toLocaleDateString(),
+                time: startDate.toLocaleTimeString(),
+                endTime: endDate.toLocaleTimeString(),
+                location,
+                notes: notes || 'None provided'
+            }
+        });
+
+        res.status(201).json({
+            success: true,
+            message: 'Interview scheduled successfully',
+            data: newInterview
+        });
+
+    } catch (error) {
+        console.error('Error creating interview:', error.response?.data || error.message);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to schedule interview',
+            error: error.message
+        });
+    }
+};
+
+const updateInterview = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateData = req.body;
+
+        // Basic validation
+        const requiredFields = ['candidateId', 'jobId', 'interviewerId', 'interviewerName', 'start', 'end', 'location'];
+        for (const field of requiredFields) {
+            if (!updateData[field]) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Missing required field: ${field}`
+                });
+            }
+        }
+
+        // Fetch the existing interview
+        const existingInterview = await Interview.findById(id);
+        if (!existingInterview) {
+            return res.status(404).json({ success: false, message: 'Interview not found' });
+        }
+
+        // Prevent changing candidate/job for existing interview
+        if (existingInterview.candidateId.toString() !== updateData.candidateId ||
+            existingInterview.jobId.toString() !== updateData.jobId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot change candidate or job for existing interview'
+            });
+        }
+
+        // Date handling
+        const startDate = new Date(updateData.start);
+        const endDate = new Date(updateData.end);
+        if (startDate >= endDate) {
+            return res.status(400).json({ success: false, message: 'End time must be after start time' });
+        }
+
+        // Check for conflicts
+        const conflictingInterview = await Interview.findOne({
+            _id: { $ne: id },
+            start: { $lt: endDate },
+            end: { $gt: startDate },
+            $or: [
+                { interviewerId: updateData.interviewerId },
+                { candidateId: updateData.candidateId }
+            ]
+        });
+
+        if (conflictingInterview) {
+            return res.status(409).json({
+                success: false,
+                message: 'Scheduling conflict detected',
+                conflictWith: conflictingInterview.interviewerId.equals(updateData.interviewerId)
+                    ? 'interviewer'
+                    : 'candidate',
+                conflictingInterviewId: conflictingInterview._id
+            });
+        }
+
+        // Flag if time has changed
+        const timeChanged =
+            existingInterview.start.getTime() !== startDate.getTime() ||
+            existingInterview.end.getTime() !== endDate.getTime();
+
+        // If time changed, delete old Zoom meeting & create new one
+        let zoomJoinUrl = existingInterview.zoomJoinUrl;
+        let zoomStartUrl = existingInterview.zoomStartUrl;
+
+        if (timeChanged) {
+            const accessToken = await getZoomAccessToken();
+
+            // Extract meeting ID from old start_url or join_url
+            const oldZoomUrl = existingInterview.zoomStartUrl || existingInterview.zoomJoinUrl;
+            const oldMeetingIdMatch = oldZoomUrl?.match(/\/j\/(\d+)/);
+            const oldMeetingId = oldMeetingIdMatch?.[1];
+
+            // Delete old Zoom meeting if ID was found
+            if (oldMeetingId) {
+                await axios.delete(`https://api.zoom.us/v2/meetings/${oldMeetingId}`, {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`
+                    }
+                }).catch(err => {
+                    console.warn('Zoom meeting deletion failed:', err.response?.data || err.message);
+                });
+            }
+
+            // Create new Zoom meeting
+            const zoomRes = await axios.post(
+                'https://api.zoom.us/v2/users/me/meetings',
+                {
+                    topic: `${updateData.candidateName} Interview`,
+                    type: 2,
+                    start_time: startDate.toISOString(),
+                    duration: Math.ceil((endDate - startDate) / 60000),
+                    settings: {
+                        host_video: true,
+                        participant_video: true
+                    }
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            zoomJoinUrl = zoomRes.data.join_url;
+            zoomStartUrl = zoomRes.data.start_url;
+        }
+
+        // Update interview in DB
+        const updatedInterview = await Interview.findByIdAndUpdate(
+            id,
+            {
+                $set: {
+                    interviewerId: updateData.interviewerId,
+                    interviewerName: updateData.interviewerName,
+                    start: startDate,
+                    end: endDate,
+                    location: updateData.location,
+                    notes: updateData.notes,
+                    status: updateData.status,
+                    updatedAt: Date.now(),
+                    zoomJoinUrl,
+                    zoomStartUrl
+                }
+            },
+            { new: true, runValidators: true }
+        ).populate('candidateId', 'fullname email')
+            .populate('jobId', 'title');
+
+        // Send update email if time or location changed
+        if (
+            timeChanged ||
+            existingInterview.location !== updateData.location
+        ) {
+            await sendInterviewEmail({
+                to: updatedInterview.candidateId.email,
+                subject: 'Your Interview Details Have Changed',
+                template: 'interviewUpdate',
+                context: {
+                    candidateName: updatedInterview.candidateId.fullname,
+                    jobTitle: updatedInterview.jobId.title,
+                    interviewerName: updatedInterview.interviewerName,
+                    date: updatedInterview.start.toLocaleDateString(),
+                    oldTime: existingInterview.start.toLocaleString(),
+                    newTime: updatedInterview.start.toLocaleString(),
+                    endTime: updatedInterview.end.toLocaleString(),
+                    oldLocation: existingInterview.location,
+                    newLocation: updatedInterview.location,
+                    notes: updatedInterview.notes
+                }
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Interview updated successfully',
+            data: updatedInterview
+        });
+
+    } catch (error) {
+        console.error('Error updating interview:', error.response?.data || error.message);
+        return res.status(500).json({
+            success: false,
+            message: 'Failed to update interview',
+            error: error.message
+        });
+    }
+};
+
+const deleteInterview = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Check if interview exists and populate candidate and job
+        const interview = await Interview.findById(id)
+            .populate('candidateId', 'fullname email') // populate candidate fullname and email
+            .populate('jobId', 'title');               // populate job title
+
+        if (!interview) {
+            return res.status(404).json({
+                success: false,
+                message: 'Interview not found'
+            });
+        }
+
+        // Soft delete
+        const deletedInterview = await Interview.findByIdAndUpdate(
+            id,
+            {
+                $set: {
+                    status: 'cancelled',
+                    deletedAt: Date.now(),
+                    isActive: false
+                }
+            },
+            { new: true }
+        ).populate('candidateId', 'fullname email') // re-populate after update
+            .populate('jobId', 'title');
+
+        // Send cancellation email
+        await sendInterviewEmail({
+            to: deletedInterview.candidateId.email,
+            subject: 'Interview Cancellation Notice',
+            template: 'interviewCancellation',
+            context: {
+                candidateName: deletedInterview.candidateId.fullname,
+                jobTitle: deletedInterview.jobId.title,
+                scheduledTime: deletedInterview.start.toLocaleString(),
+                reason: 'Administrative decision'
+            }
+        });
+
+        res.status(200).json({
+            success: true,
+            message: 'Interview cancelled successfully',
+            data: deletedInterview
+        });
+
+    } catch (error) {
+        console.error('Error deleting interview:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to cancel interview',
+            error: error.message
+        });
+    }
+};
+
+const getAllCompaniesWithVerificationStatus = async (req, res) => {
+    try {
+        // Find all company users from the Auth model
+        const allCompanyUsers = await Auth.find({ role: "company" }).select("_id isVerified");
+
+        if (!allCompanyUsers || allCompanyUsers.length === 0) {
+            return res.status(404).json({ message: "No Company found." });
+        }
+
+        // Extract company user ids
+        const companyUserIds = allCompanyUsers.map(user => user._id);
+
+        // Find company profiles based on userId
+        const companyProfiles = await CompanyProfile.find({ userId: { $in: companyUserIds } });
+
+        if (!companyProfiles || companyProfiles.length === 0) {
+            return res.status(404).json({ message: "No company profiles found." });
+        }
+
+        // Merge `isVerified` from Auth into each company profile
+        const companiesWithVerificationStatus = companyProfiles.map(profile => {
+            const authUser = allCompanyUsers.find(user => user._id.toString() === profile.userId.toString());
+            return {
+                ...profile.toObject(), // Spread all fields of the company profile
+                isVerified: authUser ? authUser.isVerified : false // Add isVerified from Auth
+            };
+        });
+
+        res.status(200).json({ companies: companiesWithVerificationStatus });
+    } catch (error) {
+        // console.error(error);
+        res.status(500).json({ message: "Server error while fetching companies." });
+    }
+};
+
+const makeCompaniesVerified = async (req, res) => {
+    const { companyId } = req.params;
+    try {
+        const updatedCompany = await Auth.findByIdAndUpdate(companyId, { isVerified: true }, { new: true });
+
+        if (!updatedCompany) {
+            return res.status(404).json({ message: "Company not found." });
+        }
+
+        res.status(200).json({ message: "Company marked as verified." });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error." });
+    }
+};
+
+const makeCompaniesUnverified = async (req, res) => {
+    const { companyId } = req.params;
+    try {
+        const updatedCompany = await Auth.findByIdAndUpdate(companyId, { isVerified: false }, { new: true });
+
+        if (!updatedCompany) {
+            return res.status(404).json({ message: "Company not found." });
+        }
+
+        res.status(200).json({ message: "Company marked as unverified." });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error." });
+    }
+};
+
+const getAllCandidatesWithVerificationStatus = async (req, res) => {
+    try {
+        // Find all candidate users from the Auth model
+        const allCandidatesUsers = await Auth.find({ role: "user" }).select("_id isVerified");
+
+        if (!allCandidatesUsers || allCandidatesUsers.length === 0) {
+            return res.status(404).json({ message: "No Candidates found." });
+        }
+
+        // Extract candidate user ids
+        const candidateUserIds = allCandidatesUsers.map(user => user._id);
+
+        // Find candidate profiles based on userId
+        const candidateProfiles = await CandidateProfile.find({ userId: { $in: candidateUserIds } });
+
+        if (!candidateProfiles || candidateProfiles.length === 0) {
+            return res.status(404).json({ message: "No candidate profiles found." });
+        }
+
+        // Merge `isVerified` from Auth into each candidate profile
+        const candidateWithVerificationStatus = candidateProfiles.map(profile => {
+            const authUser = allCandidatesUsers.find(user => user._id.toString() === profile.userId.toString());
+            return {
+                ...profile.toObject(), // Spread all fields of the candidate profile
+                isVerified: authUser ? authUser.isVerified : false // Add isVerified from Auth
+            };
+        });
+
+        res.status(200).json({ candidates: candidateWithVerificationStatus });
+    } catch (error) {
+        // console.error(error);
+        res.status(500).json({ message: "Server error while fetching candidates." });
+    }
+};
+
+const makeCandidatesVerified = async (req, res) => {
+    const { candidateId } = req.params;
+
+    try {
+        const candidate = await Auth.findByIdAndUpdate(
+            candidateId,
+            { isVerified: true },
+            { new: true }
+        );
+
+        if (!candidate) {
+            return res.status(404).json({ message: "Candidate not found." });
+        }
+        res.status(200).json({ message: "Candidate marked as verified." });
+    } catch (error) {
+        console.error("Error verifying candidate:", error);
+        res.status(500).json({ message: "Server error." });
+    }
+};
+
+const makeCandidatesUnverified = async (req, res) => {
+    const { candidateId } = req.params;
+
+    try {
+        const candidate = await Auth.findByIdAndUpdate(
+            candidateId,
+            { isVerified: false },
+            { new: true }
+        );
+
+        if (!candidate) {
+            return res.status(404).json({ message: "Candidate not found." });
+        }
+        res.status(200).json({ message: "Candidate marked as unverified." });
+    } catch (error) {
+        console.error("Error un-verifying candidate:", error);
+        res.status(500).json({ message: "Server error." });
+    }
+};
+
+const getAllInterviewesOfAllCandidates = async (req, res) => {
+    try {
+        const interviews = await Interview.find()
+            .populate('candidateId', 'name email') // include name and email
+            .populate('interviewerId', 'name email') // include name and email
+            .lean();
+
+        const userIds = interviews.map(i => i.candidateId?._id).filter(Boolean);
+
+        const profiles = await CandidateProfile.find({ userId: { $in: userIds } })
+            .select('userId profilePicture')
+            .lean();
+
+        const profileMap = profiles.reduce((acc, profile) => {
+            acc[profile.userId.toString()] = profile.profilePicture;
+            return acc;
+        }, {});
+
+        const formatted = interviews.map((intv) => ({
+            isLinkSent: intv.isLinkSent,
+            _id: intv._id,
+            candidateId: intv.candidateId?._id || null,
+            candidateName: intv.candidateId?.name || intv.candidateName,
+            candidateEmail: intv.candidateId?.email || null,
+            interviewerName: intv.interviewerId?.name || intv.interviewerName,
+            interviewerEmail: intv.interviewerId?.email || null,
+            profilePicture: profileMap[intv.candidateId?._id?.toString()] || null,
+            jobId: intv.jobId,
+            jobTitle: intv.jobTitle,
+            companyId: intv.companyId,
+            companyName: intv.companyName,
+            start: intv.start,
+            end: intv.end,
+            location: intv.location,
+            notes: intv.notes,
+            status: intv.status,
+            isActive: intv.isActive,
+            createdAt: intv.createdAt,
+            updatedAt: intv.updatedAt,
+            __v: intv.__v,
+            id: intv.id,
+            startLink: intv.zoomStartUrl,
+            joinLink: intv.zoomJoinUrl
+        }));
+
+        return res.status(200).json({ interviewes: formatted });
+    } catch (error) {
+        console.error("Error getting interview data:", error);
+        return res.status(500).json({ message: error.message });
+    }
+};
+
+const getCandidateAllInterviews = async (req, res) => {
+    const { id } = req.params;
+
+    // Validate MongoDB ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid candidate ID." });
+    }
+
+    try {
+        const interviews = await Interview.find({ candidateId: id });
+        res.status(200).json({ data: interviews });
+    } catch (error) {
+        console.error("Error retrieving interviews:", error);
+        res.status(500).json({ message: "Error retrieving interview data." });
+    }
+};
+
+const sendInterviewEmails = async (req, res) => {
+    const { id } = req.params;
+    const {
+        email, interviewerEmail, meetingLink, interviewerMeetingLink, emailSubject, emailMessage, interviewerEmailSubject,
+        interviewerEmailMessage, candidateName, interviewerName, jobTitle, scheduledStartTime, scheduledEndTime } = req.body;
+
+    if (
+        !email || !interviewerEmail ||
+        !meetingLink || !interviewerMeetingLink ||
+        !emailSubject || !emailMessage ||
+        !interviewerEmailSubject || !interviewerEmailMessage
+    ) {
+        return res.status(400).json({ error: "All fields are required" });
+    }
+
+    try {
+        // Send to Candidate
+        await sendInterviewEmail({
+            to: email,
+            subject: emailSubject,
+            template: 'interviewInviteCandidate', // create this EJS template
+            context: {
+                name: candidateName,
+                meetingLink,
+                jobTitle,
+                scheduledTime: scheduledStartTime - scheduledEndTime,
+                message: emailMessage
+            }
+        });
+
+        // Send to Interviewer
+        await sendInterviewEmail({
+            to: interviewerEmail,
+            subject: interviewerEmailSubject,
+            template: 'interviewInviteInterviewer', // create this EJS template
+            context: {
+                name: interviewerName,
+                meetingLink: interviewerMeetingLink,
+                jobTitle,
+                scheduledTime: scheduledStartTime - scheduledEndTime,
+                message: interviewerEmailMessage
+            }
+        });
+
+        // Optional: mark as sent in DB
+        await Interview.findByIdAndUpdate(id, { isLinkSent: true });
+
+        res.status(200).json({ message: "Emails sent successfully" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Failed to send interview emails" });
+    }
+};
+
+const markAsCancelled = async (req, res) => {
+    const { interviewId } = req.params; // Interview ID from route parameters
+
+    try {
+        // Find the interview by ID and update its status to "Cancelled"
+        const interview = await Interview.findByIdAndUpdate(
+            interviewId,
+            { status: 'cancelled', isActive : false },
+            { new: true }
+        );
+
+        if (!interview) {
+            return res.status(404).json({ message: 'Interview not found' });
+        }
+        res.status(200).json({ message: 'Interview status successfully updated to Cancelled' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Failed to update interview status', error: err.message });
+    }
+};
+
 const getDashboard = async (req, res) => {
     try {
         const users = await User.find();
@@ -405,7 +1079,11 @@ const deleteUser = async (req, res) => {
 };
 
 module.exports = {
-    getProfile, createProfile, getAllCompanies, getAllJobsOfSingleCompany, getDetailsOfSingleJob, changeJobStatus,
+    getProfile, createProfile, getAllCompaniesWithJobs, getAllJobsOfSingleCompany, getDetailsOfSingleJob, changeJobStatus,
     changeAsFlagged, changeAsUnFlagged, deleteJob, getAllApplicants, getSingleApplicants,
+    createInterviews, updateInterview, getCandidateAllInterviews, deleteInterview,
+    getAllCompaniesWithVerificationStatus, makeCompaniesVerified, makeCompaniesUnverified,
+    getAllCandidatesWithVerificationStatus, makeCandidatesVerified, makeCandidatesUnverified, getAllInterviewesOfAllCandidates,
+    sendInterviewEmails, markAsCancelled,
     getDashboard, manageUsers, createUser, deleteUser
 }

@@ -5,6 +5,8 @@ import { useSuperAdminContext } from '../../../context/superadmin-context';
 const AllApplicantsPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [currentPage, setCurrentPage] = useState(1);
+    const applicantListPerPage = 10;
 
     const { handleApplicants, applicants: { applicant, job } } = useSuperAdminContext()
 
@@ -18,15 +20,27 @@ const AllApplicantsPage = () => {
         job: 'All'
     });
 
+    console.log(applicant);
+
+
     const filteredApplicants = applicant.filter(applicant => {
+        const { candidateProfile, item } = applicant;
+
         return (
             (filters.search === '' ||
-                applicant.name.toLowerCase().includes(filters.search.toLowerCase()) ||
-                applicant.email.toLowerCase().includes(filters.search.toLowerCase())) &&
-            (filters.status === 'All' || applicant.status === filters.status) &&
-            (filters.job === 'All' || applicant.job === filters.job)
+                candidateProfile.fullname.toLowerCase().includes(filters.search.toLowerCase()) ||
+                candidateProfile.email.toLowerCase().includes(filters.search.toLowerCase()))
         );
     });
+
+
+    const indexOfLastApplicantList = currentPage * applicantListPerPage;
+    const indexOfFirstJobList = indexOfLastApplicantList - applicantListPerPage;
+    const currentApplicantList = filteredApplicants?.slice(indexOfFirstJobList, indexOfLastApplicantList);
+    const totalPages = Math.ceil(filteredApplicants?.length / applicantListPerPage);
+
+    const paginate = (pageNumber) => setCurrentPage(pageNumber);
+
 
     return (
         <div className="container-fluid">
@@ -37,53 +51,6 @@ const AllApplicantsPage = () => {
                         <button className="btn btn-outline-secondary">
                             <i className="bi bi-download me-1"></i> Export
                         </button>
-                    </div>
-                </div>
-
-                {/* Filters */}
-                <div className="card shadow-sm mb-4">
-                    <div className="card-body">
-                        <div className="row g-3">
-                            <div className="col-md-4">
-                                <div className="input-group">
-                                    <span className="input-group-text bg-white">
-                                        <i className="bi bi-search"></i>
-                                    </span>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        placeholder="Search applicants..."
-                                        value={filters.search}
-                                        onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-                            <div className="col-md-4">
-                                <select
-                                    className="form-select"
-                                    value={filters.status}
-                                    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                                >
-                                    <option value="All">All Statuses</option>
-                                    <option value="New">New</option>
-                                    <option value="Under Review">Under Review</option>
-                                    <option value="Interview">Interview</option>
-                                    <option value="Rejected">Rejected</option>
-                                    <option value="Hired">Hired</option>
-                                </select>
-                            </div>
-                            <div className="col-md-4">
-                                <select
-                                    className="form-select"
-                                    value={filters.job}
-                                    onChange={(e) => setFilters({ ...filters, job: e.target.value })}
-                                >
-                                    <option value="All">All Jobs</option>
-                                    <option value="Front-End Developer">Front-End Developer</option>
-                                    {/* More job options */}
-                                </select>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -214,6 +181,29 @@ const AllApplicantsPage = () => {
                     </div>
                 </div>
 
+
+                {/* Filters */}
+                <div className="card shadow-sm mb-4">
+                    <div className="card-body">
+                        <div className="row g-3">
+                            <div className="col-12">
+                                <div className="input-group">
+                                    <span className="input-group-text bg-white">
+                                        <i className="bi bi-search"></i>
+                                    </span>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        placeholder="Search applicants..."
+                                        value={filters.search}
+                                        onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Applicants Table */}
                 <div className="card shadow-sm border-0">
                     <div className="card-body p-0">
@@ -229,7 +219,7 @@ const AllApplicantsPage = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredApplicants?.map(({ candidateProfile, item }) => (
+                                    {currentApplicantList?.map(({ candidateProfile, item }) => (
                                         <tr key={candidateProfile?._id}>
                                             {/* Candidate Column */}
                                             <td>
@@ -307,16 +297,47 @@ const AllApplicantsPage = () => {
                 </div>
 
                 {/* Pagination */}
-                <nav className="mt-4">
+                <nav aria-label="Page navigation" className="mt-4">
                     <ul className="pagination justify-content-center">
-                        <li className="page-item disabled">
-                            <a className="page-link" href="#" tabIndex="-1">Previous</a>
+                        <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                            <button
+                                className="page-link btn "
+                                onClick={() => paginate(currentPage - 1)}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </button>
                         </li>
-                        <li className="page-item active"><a className="page-link" href="#">1</a></li>
-                        <li className="page-item"><a className="page-link" href="#">2</a></li>
-                        <li className="page-item"><a className="page-link" href="#">3</a></li>
-                        <li className="page-item">
-                            <a className="page-link" href="#">Next</a>
+
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                            let pageNum;
+                            if (totalPages <= 5) {
+                                pageNum = i + 1;
+                            } else if (currentPage <= 3) {
+                                pageNum = i + 1;
+                            } else if (currentPage >= totalPages - 2) {
+                                pageNum = totalPages - 4 + i;
+                            } else {
+                                pageNum = currentPage - 2 + i;
+                            }
+
+                            return (
+                                <li key={pageNum} className={`page-item ${currentPage === pageNum ? 'active' : ''}`}>
+                                    <button className="page-link" onClick={() => paginate(pageNum)}>
+                                        {pageNum}
+                                    </button>
+                                </li>
+                            );
+                        })}
+
+                        <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                            <button
+                                className="page-link"
+                                onClick={() => paginate(currentPage + 1)}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next
+                            </button>
                         </li>
                     </ul>
                 </nav>

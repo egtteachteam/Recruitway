@@ -12,10 +12,11 @@ const connectDB = require('./config/database');
 const authRoutes = require('./routes/authRoutes');
 const companyRouter = require('./routes/companyRoutes');
 const intervieweeRouter = require('./routes/intervieweeRoutes');
-const interviewerRoutes = require('./routes/interviewerRoutes');
+const interviewerRouter = require('./routes/interviewerRoutes');
 const superAdmminRouter = require('./routes/superadminRoutes');
 const interviewRoutes = require('./routes/interviewRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const zoomRouter = require('./routes/zoomRoutes');
 
 // Socket Handlers
 const socketHandlers = require('./socket/handlers');
@@ -39,10 +40,11 @@ app.use(express.json());
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/company', companyRouter);
 app.use('/api/v1/candidate', intervieweeRouter);
-app.use('/api/v1/interviewer', interviewerRoutes);
+app.use('/api/v1/interviewer', interviewerRouter);
 app.use('/api/v1/superadmin', superAdmminRouter);
 app.use('/api/v1/interviews', interviewRoutes);
 app.use('/api/v1/chat', chatRoutes);
+app.use('/zoom', zoomRouter);
 
 // Socket.io Setup
 const io = socketIo(server, {
