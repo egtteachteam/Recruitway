@@ -7,6 +7,12 @@ const candidateReducer = (state, action) => {
                 isLoading: true
             }
 
+        case "SET_LOADING_FALSE":
+            return {
+                ...state,
+                isLoading: false,
+            }
+
         case "SET_ALL_JOBS":
             return {
                 ...state,
@@ -19,6 +25,13 @@ const candidateReducer = (state, action) => {
                 ...state,
                 isLoading: false,
                 appliedJobs: action.payload.appliedJobs || []
+            }
+
+        case "SET_SELECTED_JOBS_DETAILS":
+            return {
+                ...state,
+                isLoading: false,
+                selectedJobDetails: action.payload || {}
             }
 
         default:

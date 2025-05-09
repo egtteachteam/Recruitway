@@ -31,14 +31,18 @@ const authSchema = new Schema({
     }
 }, { timestamps: true });
 
-authSchema.methods.generateToken = function () {
+authSchema.methods.generateToken = function (rememberMe = false) {
     try {
-        const token = jwt.sign({
-            userId: this._id.toString(),
-            email: this.email,
-        }, process.env.JWT_SECRET, {
-            expiresIn: "1d",
-        });
+        const token = jwt.sign(
+            {
+                userId: this._id.toString(),
+                email: this.email,
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: rememberMe ? "30d" : "1d"
+            }
+        );
 
         return token;
     } catch (error) {

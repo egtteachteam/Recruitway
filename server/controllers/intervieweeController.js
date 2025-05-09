@@ -267,19 +267,37 @@ const getAppliedJobs = async (req, res) => {
         // Sort items by the job's 'posted' date in descending order
         appliedJobs.items.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
-        const jobsWithStatus = appliedJobs.items.map(item => ({
-            appicationId: item._id,
-            jobId: item.jobId._id,
-            title: item.jobId.title,
-            company: item.jobId.company,
-            location: item.jobId.location,
-            salary: item.jobId.salary,
-            experience: item.jobId.experience,
-            type: item.jobId.type,
-            status: item.status,
-            appliedAt: item.createdAt,
-            statusDate: item.updatedAt
-        }));
+        // const jobsWithStatus = appliedJobs?.items?.map(item => ({
+        //     appicationId: item._id,
+        //     jobId: item.jobId._id,
+        //     title: item.jobId.title,
+        //     company: item.jobId.company,
+        //     location: item.jobId.location,
+        //     salary: item.jobId.salary,
+        //     experience: item.jobId.experience,
+        //     type: item.jobId.type,
+        //     status: item.status,
+        //     appliedAt: item.createdAt,
+        //     statusDate: item.updatedAt
+        // }));
+
+        const jobsWithStatus = appliedJobs?.items?.map(item => {
+            const job = item.jobId;
+
+            return {
+                applicationId: item._id,
+                jobId: job?._id,
+                title: job?.title || 'N/A',
+                company: job?.company || 'N/A',
+                location: job?.location || 'N/A',
+                salary: job?.salary || 'N/A',
+                experience: job?.experience || 'N/A',
+                type: job?.type || 'N/A',
+                status: item.status,
+                appliedAt: item.createdAt,
+                statusDate: item.updatedAt
+            };
+        });
 
         res.status(200).json({ success: true, appliedJobs: jobsWithStatus });
     } catch (error) {
@@ -316,6 +334,27 @@ const withdrawFromJob = async (req, res) => {
     } catch (error) {
         console.error("Error withdrawing from job:", error.message);
         res.status(500).json({ message: "Error withdrawing from job", error: error.message });
+    }
+};
+
+const getSelectedJobDetails = async (req, res) => {
+    const { jobId } = req.params;
+
+    try {
+        if (!jobId) {
+            return res.status(400).json({ message: "Job ID is required." });
+        }
+
+        const selectedJobDetails = await Job.findById(jobId);
+
+        if (!selectedJobDetails) {
+            return res.status(404).json({ message: "Job not found." });
+        }
+
+        res.status(200).json({ selectedJobDetails });
+    } catch (error) {
+        console.error("Error finding job details:", error.message);
+        res.status(500).json({ message: "Error finding job details", error: error.message });
     }
 };
 
@@ -394,6 +433,6 @@ const rejectInterview = async (req, res) => {
 };
 
 module.exports = {
-    getProfile, createProfile, getAllJobs, applyForJob, getUserNotifications, getAppliedJobs, withdrawFromJob,
+    getProfile, createProfile, getAllJobs, applyForJob, getUserNotifications, getAppliedJobs, withdrawFromJob, getSelectedJobDetails,
     getDashboard, viewInterviews, acceptInterview, rejectInterview
 }

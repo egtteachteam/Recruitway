@@ -51,12 +51,12 @@ const CompanySidebar = () => {
                                 <span className="hide-menu">Settings</span>
                             </Link>
                         </li>
-                        <li className="sidebar-item">
+                        {/* <li className="sidebar-item">
                             <Link className="sidebar-link" to="/company/CompanyDetail" aria-expanded="false">
                                 <span><i className="ti ti-messages"></i></span>
                                 <span className="hide-menu">Company Details</span>
                             </Link>
-                        </li>
+                        </li> */}
                     </ul>
                 </nav>
             </div>

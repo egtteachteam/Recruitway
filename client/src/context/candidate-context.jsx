@@ -10,7 +10,8 @@ const initialState = {
     isLoading: false,
     allJobs: [],
     appliedJobs: [],
-    shortlistedJobs: []
+    shortlistedJobs: [],
+    selectedJobDetails: {}
 }
 
 const CandidateProvider = ({ children }) => {
@@ -30,6 +31,7 @@ const CandidateProvider = ({ children }) => {
             const { allJobs } = res.data
             dispatch({ type: "SET_ALL_JOBS", payload: { allJobs } })
         } catch (error) {
+            dispatch({ type: "SET_LOADING_FALSE" });
             console.log(error);
         }
     }
@@ -73,6 +75,7 @@ const CandidateProvider = ({ children }) => {
             const { appliedJobs } = res.data
             dispatch({ type: "SET_APPLIED_JOBS", payload: { appliedJobs } })
         } catch (error) {
+            dispatch({ type: "SET_LOADING_FALSE" });
             console.error(error);
             const message =
                 error?.response?.data?.message || "Failed to fetch applied jobs.";
@@ -101,13 +104,37 @@ const CandidateProvider = ({ children }) => {
         }
     };
 
+    const getSelectedJobDetails = async (jobId) => {
+        dispatch({ type: "SET_LOADING" });
+
+        try {
+            const res = await axios.get(`${server}/api/v1/candidate/get-selected-job-detail/${jobId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const { selectedJobDetails } = res.data;
+            dispatch({ type: "SET_SELECTED_JOBS_DETAILS", payload: selectedJobDetails });
+        } catch (error) {
+            console.error("Error fetching selected job details:", error);
+
+            const message = error?.response?.data?.message || "Failed to get job details.";
+            toast.dismiss();
+            toast.error(message);
+        } finally {
+            dispatch({ type: "SET_LOADING_FALSE" });
+        }
+    };
+
     return (
         <CandidateContext.Provider value={{
             ...state,
             getAllJobs,
             appllyJobs,
             getAppliedJobs,
-            withdrawJobApplication
+            withdrawJobApplication,
+            getSelectedJobDetails
         }}>
             {children}
         </CandidateContext.Provider>

@@ -81,6 +81,7 @@ import InterviewReportGenerator from './pages/Interviewer/InterviewReportGenerat
 import SuperAdminAllCandidates from './pages/SuperAdmin/SuperAdminAllCandidates/SuperAdminAllCandidates';
 import SuperAdminCompaniesCard from './pages/SuperAdmin/SuperAdminCompaniesCard/SuperAdminCompaniesCard';
 import SuperAdminAllInterviews from './pages/SuperAdmin/SuperAdminAllInterviews/SuperAdminAllInterviews';
+import UserJobDetails from './pages/User/UserJobDetails/UserJobDetails';
 
 function App() {
 
@@ -279,6 +280,7 @@ function App() {
           <Route path='dashboard' element={<UserDashBoard />} />
           <Route path='jobs' element={<UserJobs />} />
           <Route path='jobs-applied' element={<UserJobsApplied />} />
+          <Route path='jobs-applied-details/:jobId' element={<UserJobDetails />} />
           <Route path='shortlisted' element={<UserShortlisted />} />
           <Route path='setting' element={<SettingsPage />} />
           <Route path='profile' element={<UserProfile />} />

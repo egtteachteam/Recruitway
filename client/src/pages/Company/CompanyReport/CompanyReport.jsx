@@ -749,39 +749,102 @@ const CompanyReport = () => {
         <div className="card shadow-sm">
           <div className="card-body p-0">
             <div className="table-responsive">
-              <table className="table table-hover mb-0">
+              {/* Desktop Table (hidden on mobile) */}
+              <table className="table table-striped table-hover d-none d-lg-table">
                 <thead className="table-light">
                   <tr>
-                    <th>Candidate</th>
-                    <th className="d-none d-md-table-cell">Position</th>
-                    <th className="d-none d-md-table-cell">Date</th>
-                    <th>Score</th>
-                    <th>Details</th>
+                    <th style={{ minWidth: '200px' }}>Candidate</th>
+                    <th style={{ minWidth: '150px' }}>Position</th>
+                    <th style={{ minWidth: '120px' }}>Date</th>
+                    <th style={{ minWidth: '100px' }}>Score</th>
+                    <th style={{ minWidth: '120px' }}>Details</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {currentSummaries.map((summary) => (
-                    <tr key={summary.id}>
-                      <td>
-                        <div className="fw-bold">{summary.interview.candidate.name}</div>
-                        <div className="small text-muted">{summary.interview.candidate.email}</div>
-                      </td>
-                      <td className="d-none d-md-table-cell">{summary.interview.position.title}</td>
-                      <td className="d-none d-md-table-cell">{formatDate(summary.interview.date)}</td>
-                      <td>
-                        <span className={`badge ${parseFloat(summary.overallScore) >= 8 ? 'bg-success' : parseFloat(summary.overallScore) >= 6 ? 'bg-warning' : 'bg-danger'}`}>
-                          {summary.overallScore}
-                        </span>
-                      </td>
-                      <td>
-                        <button className="btn btn-sm btn-outline-primary" onClick={() => handleSummaryClick(summary)} style={{ cursor: 'pointer' }}>
-                          View
-                        </button>
+                  {currentSummaries.length > 0 ? (
+                    currentSummaries.map((summary) => (
+                      <tr key={summary.id}>
+                        <td>
+                          <div className="d-flex align-items-center">
+                            <div>
+                              <div className="fw-bold">{summary.interview.candidate.name}</div>
+                              <div className="small text-muted">{summary.interview.candidate.email}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>{summary.interview.position.title}</td>
+                        <td>{formatDate(summary.interview.date)}</td>
+                        <td>
+                          <span className={`badge ${parseFloat(summary.overallScore) >= 8 ? 'bg-success' :
+                            parseFloat(summary.overallScore) >= 6 ? 'bg-warning text-dark' : 'bg-danger'}`}>
+                            {summary.overallScore}
+                          </span>
+                        </td>
+                        <td>
+                          <button
+                            className="btn btn-sm btn-outline-primary"
+                            onClick={() => handleSummaryClick(summary)}
+                          >
+                            View Report
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="5" className="text-center py-4 text-muted">
+                        No interview summaries available
                       </td>
                     </tr>
-                  ))}
+                  )}
                 </tbody>
               </table>
+
+              {/* Mobile Cards (hidden on desktop) */}
+              <div className="d-lg-none">
+                {currentSummaries.length > 0 ? (
+                  currentSummaries.map((summary) => (
+                    <div key={summary.id} className="card mb-3">
+                      <div className="card-body">
+                        <div className="d-flex justify-content-between align-items-start mb-2">
+                          <div>
+                            <h6 className="mb-0 fw-bold">{summary.interview.candidate.name}</h6>
+                            <small className="text-muted">{summary.interview.candidate.email}</small>
+                          </div>
+                          <span className={`badge ${parseFloat(summary.overallScore) >= 8 ? 'bg-success' :
+                            parseFloat(summary.overallScore) >= 6 ? 'bg-warning text-dark' : 'bg-danger'}`}>
+                            {summary.overallScore}
+                          </span>
+                        </div>
+
+                        <div className="mb-2">
+                          <div className="d-flex align-items-center mb-1">
+                            <i className="bi bi-briefcase me-2"></i>
+                            <span>{summary.interview.position.title}</span>
+                          </div>
+                          <div className="d-flex align-items-center mb-1">
+                            <i className="bi bi-calendar me-2"></i>
+                            <span>{formatDate(summary.interview.date)}</span>
+                          </div>
+                        </div>
+
+                        <div className="d-flex gap-2">
+                          <button
+                            className="btn btn-sm btn-outline-primary flex-grow-1"
+                            onClick={() => handleSummaryClick(summary)}
+                          >
+                            View Full Report
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-muted">
+                    No interview summaries available
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCandidateContext } from '../../../context/candidate-context';
-import { useAuthContext } from '../../../context/auth-context';
 
 const UserJobsApplied = () => {
     const [filterStatus, setFilterStatus] = useState('all');
@@ -9,10 +8,9 @@ const UserJobsApplied = () => {
     const jobListPerPage = 10;
     const navigate = useNavigate();
     const { getAppliedJobs, appliedJobs, isLoading, withdrawJobApplication } = useCandidateContext()
-    const { user } = useAuthContext()
 
     useEffect(() => {
-        getAppliedJobs(user._id)
+        getAppliedJobs()
     }, [])
 
     const filteredApplications = appliedJobs.filter(app =>
@@ -39,7 +37,7 @@ const UserJobsApplied = () => {
     };
 
     const handleViewJob = (jobId) => {
-        navigate(`/jobs/${jobId}`);
+        navigate(`/user/jobs-applied-details/${jobId}`);
     };
 
     const indexOfLastJobList = currentPage * jobListPerPage;

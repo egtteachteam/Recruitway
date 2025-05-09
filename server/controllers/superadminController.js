@@ -1026,7 +1026,7 @@ const markAsCancelled = async (req, res) => {
         // Find the interview by ID and update its status to "Cancelled"
         const interview = await Interview.findByIdAndUpdate(
             interviewId,
-            { status: 'cancelled', isActive : false },
+            { status: 'cancelled', isActive: false },
             { new: true }
         );
 

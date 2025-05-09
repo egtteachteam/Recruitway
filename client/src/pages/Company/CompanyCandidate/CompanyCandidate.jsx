@@ -52,14 +52,6 @@ const CandidateCard = ({ isOpen, candidate, onClose, candidateId, applicationId 
                                         <h4 className="mt-3 mb-1 fw-bold">{fullname}</h4>
                                         <p className="text-muted mb-3">{headline || 'No headline available'}</p>
 
-                                        {/* <div className="d-flex justify-content-center gap-2 mb-4">
-                                            <span className={`badge rounded-pill bg-${status === 'Active' ? 'success' : 'info'} bg-opacity-10 text-${status === 'Active' ? 'success' : 'info'}`}>
-                                                {status}
-                                            </span>
-                                            <span className="badge rounded-pill bg-secondary bg-opacity-10 text-secondary">
-                                                Last active: {lastActive}
-                                            </span>
-                                        </div> */}
                                     </div>
 
                                     <div className="border-top pt-3">
@@ -428,22 +420,23 @@ const CompanyCandidate = () => {
                     <div className="row">
                         <div className="col-12">
                             <div className="table-responsive">
-                                <table className="table table-hover mb-0">
+                                {/* Desktop Table (hidden on mobile) */}
+                                <table className="table table-striped table-hover d-none d-lg-table">
                                     <thead className="table-light">
                                         <tr>
-                                            <th className="d-none d-sm-table-cell">Applied For</th>
-                                            <th>Name</th>
-                                            <th className="d-none d-md-table-cell">Location</th>
-                                            <th className="d-none d-lg-table-cell">Phone</th>
-                                            <th>Status</th>
-                                            <th className="d-none d-lg-table-cell">Resume</th>
-                                            <th>Actions</th>
+                                            <th style={{ minWidth: '150px' }}>Candidate</th>
+                                            <th style={{ minWidth: '150px' }}>Applied For</th>
+                                            <th style={{ minWidth: '120px' }}>Location</th>
+                                            <th style={{ minWidth: '120px' }}>Phone</th>
+                                            <th style={{ minWidth: '100px' }}>Status</th>
+                                            <th style={{ minWidth: '120px' }}>Resume</th>
+                                            <th style={{ minWidth: '100px' }}>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {isLoading ? (
                                             <tr>
-                                                <td colSpan="6" className="text-center py-4">
+                                                <td colSpan="7" className="text-center py-4">
                                                     <div className="d-flex justify-content-center align-items-center gap-2">
                                                         <div className="spinner-border spinner-border-sm" role="status"></div>
                                                         <span>Loading candidates...</span>
@@ -452,19 +445,32 @@ const CompanyCandidate = () => {
                                             </tr>
                                         ) : currentCandidateList.length === 0 ? (
                                             <tr>
-                                                <td colSpan="6" className="text-center py-4 text-muted">
+                                                <td colSpan="7" className="text-center py-4 text-muted">
                                                     No candidates found.
                                                 </td>
                                             </tr>
                                         ) : (
                                             currentCandidateList.map((candidate) => (
                                                 <tr key={candidate?.applicationId}>
-                                                    <td className="d-none d-sm-table-cell">{candidate?.jobDetails?.title || <span className="text-muted">N/A</span>}</td>
-                                                    <td>{candidate.candidateProfile?.fullname}</td>
-                                                    <td className="d-none d-md-table-cell">{candidate?.candidateProfile?.location}</td>
-                                                    <td className="d-none d-lg-table-cell">{candidate?.candidateProfile?.phone}</td>
-                                                    <td>{candidate?.status}</td>
-                                                    <td className="d-none d-lg-table-cell">
+                                                    <td>
+                                                        <div className="d-flex align-items-center">
+                                                            <div>
+                                                                <div>{candidate.candidateProfile?.fullname}</div>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>{candidate?.jobDetails?.title || <span className="text-muted">N/A</span>}</td>
+                                                    <td>{candidate?.candidateProfile?.location || <span className="text-muted">N/A</span>}</td>
+                                                    <td>{candidate?.candidateProfile?.phone || <span className="text-muted">N/A</span>}</td>
+                                                    <td>
+                                                        <span className={`badge ${candidate?.status === 'hired' ? 'bg-success' :
+                                                            candidate?.status === 'rejected' ? 'bg-danger' :
+                                                                candidate?.status === 'shortlisted' ? 'bg-info' : 'bg-secondary'
+                                                            }`}>
+                                                            {candidate?.status}
+                                                        </span>
+                                                    </td>
+                                                    <td>
                                                         {candidate?.candidateProfile?.resume ? (
                                                             <a href={candidate?.candidateProfile?.resume} target="_blank" rel="noopener noreferrer" className="text-nowrap">
                                                                 View Resume
@@ -483,6 +489,71 @@ const CompanyCandidate = () => {
                                         )}
                                     </tbody>
                                 </table>
+
+                                {/* Mobile Cards (hidden on desktop) */}
+                                <div className="d-lg-none">
+                                    {isLoading ? (
+                                        <div className="text-center py-4">
+                                            <div className="d-flex justify-content-center align-items-center gap-2">
+                                                <div className="spinner-border spinner-border-sm" role="status"></div>
+                                                <span>Loading candidates...</span>
+                                            </div>
+                                        </div>
+                                    ) : currentCandidateList.length === 0 ? (
+                                        <div className="text-center py-4 text-muted">
+                                            No candidates found.
+                                        </div>
+                                    ) : (
+                                        currentCandidateList.map((candidate) => (
+                                            <div key={candidate?.applicationId} className="card mb-3">
+                                                <div className="card-body">
+                                                    <div className="d-flex justify-content-between align-items-start mb-2">
+                                                        <div>
+                                                            <h6 className="mb-0">{candidate.candidateProfile?.fullname}</h6>
+                                                            <small className="text-muted">{candidate?.jobDetails?.title || 'N/A'}</small>
+                                                        </div>
+                                                        <span className={`badge ${candidate?.status === 'hired' ? 'bg-success' :
+                                                            candidate?.status === 'rejected' ? 'bg-danger' :
+                                                                candidate?.status === 'shortlisted' ? 'bg-info' : 'bg-secondary'
+                                                            }`}>
+                                                            {candidate?.status}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="mb-2">
+                                                        <div className="d-flex align-items-center mb-1">
+                                                            <i className="bi bi-geo-alt me-2"></i>
+                                                            <span>{candidate?.candidateProfile?.location || 'N/A'}</span>
+                                                        </div>
+                                                        <div className="d-flex align-items-center mb-1">
+                                                            <i className="bi bi-telephone me-2"></i>
+                                                            <span>{candidate?.candidateProfile?.phone || 'N/A'}</span>
+                                                        </div>
+                                                        <div className="d-flex align-items-center mb-1">
+                                                            <i className="bi bi-file-earmark-text me-2"></i>
+                                                            {candidate?.candidateProfile?.resume ? (
+                                                                <a href={candidate?.candidateProfile?.resume} target="_blank" rel="noopener noreferrer">
+                                                                    View Resume
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-muted">No resume</span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="d-flex gap-2">
+                                                        <button
+                                                            className="btn btn-sm btn-outline-primary flex-grow-1"
+                                                            onClick={() => handleViewCandidate(candidate, candidate.applicationJobId)}
+                                                        >
+                                                            View Details
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>

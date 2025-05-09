@@ -15,10 +15,9 @@ companyRouter.patch("/update-job/:jobId", authMiddleware, roleCheck(['company'])
 companyRouter.delete("/delete-job/:jobId", authMiddleware, roleCheck(['company']), updateLastActive, deleteJobPost);
 companyRouter.get('/allapplicants', authMiddleware, roleCheck(['company']), updateLastActive, getAllJobApplicants);
 companyRouter.get('/applicants/:jobId', authMiddleware, roleCheck(['company']), updateLastActive, getJobApplicants);
-companyRouter.put("/changeStatus/:applicationId", authMiddleware, updateLastActive, updateApplicationStatus);
-companyRouter.get("/getCompanyNotification", authMiddleware, updateLastActive, getCompanyNotifications);
-companyRouter.patch("/markAsRead/:companyId", authMiddleware, updateLastActive, markAsRead);
-
+companyRouter.put("/changeStatus/:applicationId", authMiddleware, roleCheck(['company']), updateLastActive, updateApplicationStatus);
+companyRouter.get("/getCompanyNotification", authMiddleware, roleCheck(['company']), updateLastActive, getCompanyNotifications);
+companyRouter.patch("/markAsRead/:companyId", authMiddleware, roleCheck(['company']), updateLastActive, markAsRead);
 
 
 

@@ -6,6 +6,7 @@ const CandidateProfile = require('../models/Auth/Candidate-model');
 const InterviewerProfile = require('../models/Auth/Interviewer-model');
 const CompanyProfile = require('../models/Auth/Company-model');
 const SuperAdminProfile = require('../models/Auth/SuperAdmin-model');
+const { sendInterviewEmail } = require('../utils/interview-emailService');
 
 
 const registerController = async (req, res) => {
@@ -199,34 +200,24 @@ const forgotPassword = async (req, res) => {
 
         const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '15m' });
         user.resetToken = token;
-        user.tokenExpiry = Date.now() + 15 * 60 * 1000; // 15 minutes
+        user.tokenExpiry = Date.now() + 15 * 60 * 1000;
         await user.save();
 
-        // Send email
-        const transporter = nodemailer.createTransport({
-            host: 'smtp.hostinger.com',
-            port: 465,
-            secure: true,
-            auth: {
-                user: "no-reply@anand",
-                pass: "no-replyAnand",
+        const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
+
+        await sendInterviewEmail({
+            to: email,
+            subject: 'Reset Your Password',
+            template: 'resetPassword',
+            context: {
+                userName: user.fullname || "User",
+                resetLink,
             },
         });
 
-        const resetLink = `${process.env.FRONTEND_URL}/reset-password/${token}`;
-        const mailOptions = {
-            from: "no-reply@anand",
-            to: email,
-            subject: 'Password Reset Request',
-            text: `Click the link to reset your password: ${resetLink}`,
-        };
-
-        await transporter.sendMail(mailOptions);
-
-        res.status(200).json({ message: "A link to set a new password will be sent to your email address." });
+        return res.status(200).json({ message: "Password reset email sent successfully." });
     } catch (error) {
-        console.log(error);
-
+        console.error("Forgot password error:", error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -236,7 +227,7 @@ const resetPassword = async (req, res) => {
     const { newPassword } = req.body;
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const user = await Auth.findById(decoded.id);
 
         if (!user || user.resetToken !== token || user.tokenExpiry < Date.now()) {
@@ -251,7 +242,7 @@ const resetPassword = async (req, res) => {
         user.tokenExpiry = undefined;
 
         await user.save();
-        res.status(200).json({ message: "Password reset successfully" });
+        return res.status(200).json({ success: true, message: "Password reset successfully" });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -259,79 +250,36 @@ const resetPassword = async (req, res) => {
 
 const deleteAccount = async (req, res) => {
     const { password } = req.body;
+
     try {
-        // Get the user from the request (attached by authMiddleware)
-        const user = await Auth.findById(req.user._id)
+        const user = await Auth.findById(req.user._id);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const isPasswordCorrect = await bcrypt.compare(password, user.password)
-
+        const isPasswordCorrect = await bcrypt.compare(password, user.password);
         if (!isPasswordCorrect) {
-            return res.status(400).json({ success: false, message: "Invalid Credentials" })
+            return res.status(400).json({ success: false, message: "Invalid credentials" });
         }
 
-        // Step 1: Save user data to the DeletedAccount model
-        const deletedAccount = new DeletedAuth({
-            name: user.name,
-            email: user.email,
-            phone: user.phone,
-            organization: user.organization,
-            password: user.password,
-            isAdmin: user.isAdmin,
-            role: user.role,
-            term_condition: user.term_condition,
-            address: user.address
-        });
-
-        // Save the deleted account data
-        await deletedAccount.save();
-
-        await Cart.deleteMany({ userId: user._id }); // Delete user's cart items
-        await WishList.deleteMany({ userId: user._id }); // Delete user's wishlist items
-        await Address.deleteMany({ userId: user._id }); // Delete user's saved addresses
-
-        // Step 2: Delete the user's account from the Auth model (user model)
-        await user.deleteOne(); // delete the current user document from the database
-
-        // Send email
-        const transporter = nodemailer.createTransport({
-            host: 'smtp.hostinger.com',
-            port: 465,
-            secure: true,
-            auth: {
-                user: "no-reply@anand",
-                pass: "no-replyAnand",
-            },
-        });;
-
-        const mailOptions = {
-            from: "no-reply@anand",
+        // Send farewell email before deleting
+        await sendInterviewEmail({
             to: user.email,
             subject: 'Account Deletion Confirmation',
-            text: `Dear ${user.name},\n\nWe are sorry to see you go. Your account has been successfully deleted along with all associated data. If this was a mistake or you wish to rejoin, feel free to contact us.\n\nBest regards,\nRecruitway`,
-            html: `
-                    <p>Dear ${user.name},</p>
-                    <p>We are sorry to see you go. Your account has been successfully deleted along with all associated data.</p>
-                    <p>If this was a mistake or you wish to rejoin, feel free to contact us at
-                    <a href="mailto:contact@recruitway.ai">contact@recruitway.ai</a>.</p>
-                    <p>Best regards,</p>
-                    <p>Recruitway</p>
-                `,
-        };
+            template: 'accountDeletion', // This refers to views/accountDeletion.ejs
+            context: {
+                userName: user.fullname || "User"
+            }
+        });
 
-        // Send the email
-        await transporter.sendMail(mailOptions);
+        // Delete user (actual deletion logic needed here)
+        await user.remove();
 
-        // Respond with success message
         res.status(200).json({ message: 'Your account has been successfully deleted.' });
     } catch (err) {
-        // console.error(err);
         res.status(500).json({ message: err.message });
     }
-
-}
+};
 
 
 // // Logout

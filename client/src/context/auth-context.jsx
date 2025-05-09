@@ -47,8 +47,11 @@ const AuthProvider = ({ children }) => {
         if (token) {
             dispatch({ type: "LOAD_TOKEN", payload: { token } });
             fetchUserData(token);
-            getSuperAdmin(token)
+            if (state?.user?.role === "company") {
+                getSuperAdmin(token);
+            }
         }
+
 
     }, [state.isAuthenticated]);
 
@@ -133,6 +136,11 @@ const AuthProvider = ({ children }) => {
             console.log("Failed to fetch user data", error?.message);
         }
     }
+
+    // useEffect(() => {
+
+    // }, [state.user, token]);
+
 
     const updateUser = async (newUserData) => {
         try {

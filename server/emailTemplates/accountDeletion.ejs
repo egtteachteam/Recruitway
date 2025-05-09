@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Account Deletion Confirmation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: #dc3545;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .content {
+            background-color: #f9f9f9;
+            padding: 20px;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>We're Sorry to See You Go</h1>
+        </div>
+        <div class="content">
+            <p>Hello <strong>
+                    <%= userName %>
+                </strong>,</p>
+            <p>Your account has been successfully deleted along with all associated data.</p>
+            <p>If this was a mistake or you want to rejoin, please contact us at
+                <a href="mailto:contact@recruitway.ai">contact@recruitway.ai</a>.
+            </p>
+            <p>Best regards,<br>The Recruitway Team</p>
+        </div>
+        <div class="footer">
+            <p>This is an automated message. Please do not reply.</p>
+        </div>
+    </div>
+</body>
+
+</html>

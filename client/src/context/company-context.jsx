@@ -19,8 +19,7 @@ const initialState = {
 const CompanyProvider = ({ children }) => {
 
     const [state, dispatch] = useReducer(companyReducer, initialState)
-    const { server } = useAuthContext()
-
+    const { server, user } = useAuthContext()
     const token = localStorage.getItem("token")
 
     const getAllJobs = async () => {
@@ -169,8 +168,11 @@ const CompanyProvider = ({ children }) => {
     }
 
     useEffect(() => {
-        getNotification()
-    }, [])
+        if (user && user.role === "company") {
+            getNotification();
+        }
+    }, [user]);
+
 
     const markAsRead = async (id) => {
         try {
